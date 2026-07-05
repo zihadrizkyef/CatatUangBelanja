@@ -1,0 +1,179 @@
+// Mirrors the entities in "Draft Aplikasi Pencatatan Keuangan" section 5.
+// Used for Tahap 4 (online sync) — not required by the offline MVP.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum WalletType {
+  Cash
+  Bank
+  EWallet
+  Savings
+  Other
+}
+
+enum IconType {
+  System
+  Emoji
+  Photo
+}
+
+enum CategoryType {
+  Income
+  Expense
+}
+
+enum TransactionType {
+  Income
+  Expense
+  Transfer
+}
+
+enum SyncStatus {
+  Synced
+  Pending
+  Failed
+}
+
+enum BudgetPeriod {
+  Monthly
+}
+
+enum Frequency {
+  Daily
+  Weekly
+  Monthly
+}
+
+enum Theme {
+  Light
+  Dark
+  System
+}
+
+enum AppLockType {
+  PIN
+  Biometric
+  None
+}
+
+// Login is phone number + OTP (doc 4.10 / 6.1) — no password stored.
+model User {
+  id                 String               @id @default(uuid())
+  phoneNumber        String               @unique
+  createdAt          DateTime             @default(now())
+  wallets            Wallet[]
+  categories         Category[]
+  transactions       Transaction[]
+  budgets            Budget[]
+  recurringTxns      RecurringTransaction[]
+  settings           Settings?
+}
+
+model Wallet {
+  id          String     @id @default(uuid())
+  user        User       @relation(fields: [userId], references: [id])
+  userId      String
+  name        String
+  type        WalletType
+  color       String
+  iconType    IconType
+  iconValue   String
+  isArchived  Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+
+  transactionsFrom Transaction[] @relation("WalletSource")
+  transactionsTo   Transaction[] @relation("WalletTarget")
+
+  @@index([userId])
+}
+
+model Category {
+  id           String        @id @default(uuid())
+  user         User?         @relation(fields: [userId], references: [id])
+  userId       String?
+  name         String
+  type         CategoryType
+  color        String
+  iconType     IconType
+  iconValue    String
+  isSystem     Boolean       @default(false)
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@index([userId])
+}
+
+model Transaction {
+  id              String          @id @default(uuid())
+  user            User            @relation(fields: [userId], references: [id])
+  userId          String
+  type            TransactionType
+  amount          Int
+  wallet          Wallet          @relation("WalletSource", fields: [walletId], references: [id])
+  walletId        String
+  targetWallet    Wallet?         @relation("WalletTarget", fields: [targetWalletId], references: [id])
+  targetWalletId  String?
+  category        Category?       @relation(fields: [categoryId], references: [id])
+  categoryId      String?
+  dateTime        DateTime
+  note            String?
+  attachmentUrl   String?
+  recurring       RecurringTransaction? @relation(fields: [recurringId], references: [id])
+  recurringId     String?
+  isDeleted       Boolean         @default(false)
+  syncStatus      SyncStatus      @default(Synced)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([walletId])
+}
+
+model Budget {
+  id          String       @id @default(uuid())
+  user        User         @relation(fields: [userId], references: [id])
+  userId      String
+  category    Category     @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  period      BudgetPeriod @default(Monthly)
+  limitAmount Int
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
+}
+
+model RecurringTransaction {
+  id           String        @id @default(uuid())
+  user         User          @relation(fields: [userId], references: [id])
+  userId       String
+  type         TransactionType
+  amount       Int
+  walletId     String
+  categoryId   String
+  frequency    Frequency
+  startDate    DateTime
+  nextRunAt    DateTime
+  isActive     Boolean       @default(true)
+  note         String?
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
+model Settings {
+  id               String      @id @default(uuid())
+  user             User        @relation(fields: [userId], references: [id])
+  userId           String      @unique
+  theme            Theme       @default(System)
+  backgroundTheme  String?
+  appLockEnabled   Boolean     @default(false)
+  appLockType      AppLockType @default(None)
+  lastSyncedAt     DateTime?
+}
