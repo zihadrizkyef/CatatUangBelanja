@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:path/path.dart';
@@ -36,7 +35,7 @@ void main() {
     expect(find.text('Dompet'), findsOneWidget);
     expect(find.text('Rangkuman'), findsOneWidget);
     expect(find.text('Pengaturan'), findsOneWidget);
-    expect(find.text('Belum ada transaksi'), findsOneWidget);
+    expect(find.text('Belum ada transaksi, Bun. Yuk catat yang pertama.'), findsOneWidget);
   });
 
   testWidgets('Tapping the FAB opens TransactionSheet and can save a transaction', (tester) async {
@@ -46,20 +45,28 @@ void main() {
     });
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(find.byTooltip('Catat transaksi'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Catat Transaksi'), findsOneWidget);
+    expect(find.text('Tambah Pengeluaran'), findsOneWidget);
 
-    await tester.enterText(find.widgetWithText(TextField, 'Nominal (Rp)'), '25000');
-    await tester.tap(find.widgetWithText(FilledButton, 'Simpan'));
+    await tester.ensureVisible(find.text('Belanja Dapur'));
+    await tester.tap(find.text('Belanja Dapur'));
+    await tester.pumpAndSettle();
+    for (final digit in ['2', '5', '0', '0', '0']) {
+      await tester.ensureVisible(find.text(digit));
+      await tester.tap(find.text(digit));
+      await tester.pump();
+    }
+    await tester.ensureVisible(find.text('✓'));
+    await tester.tap(find.text('✓'));
     await tester.runAsync(() async {
       await Future.delayed(const Duration(milliseconds: 300));
     });
     await tester.pumpAndSettle();
 
-    expect(find.text('Catat Transaksi'), findsNothing);
-    expect(find.text('Belum ada transaksi'), findsNothing);
+    expect(find.text('Tambah Pengeluaran'), findsNothing);
+    expect(find.text('Belum ada transaksi, Bun. Yuk catat yang pertama.'), findsNothing);
   });
 
   testWidgets('Tapping bottom nav switches tabs', (tester) async {

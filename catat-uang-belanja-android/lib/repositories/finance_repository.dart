@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart' hide Category;
+import 'package:flutter/material.dart' show ThemeMode;
 
 import '../db/app_database.dart';
 import '../models/budget.dart';
+import '../models/budget_status.dart';
 import '../models/category.dart';
 import '../models/transaction.dart';
 import '../models/wallet.dart';
@@ -20,6 +22,20 @@ class FinanceRepository extends ChangeNotifier {
   List<Category> _categories = [];
   List<Transaction> _transactions = [];
   List<Budget> _budgets = [];
+
+  /// Defaults to following the OS setting; [toggleDarkMode] pins it to an
+  /// explicit light/dark choice, mirroring the mockup's own
+  /// override-vs-system-preference behavior.
+  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode get themeMode => _themeMode;
+
+  void toggleDarkMode() {
+    final isCurrentlyDark = _themeMode == ThemeMode.dark ||
+        (_themeMode == ThemeMode.system &&
+            PlatformDispatcher.instance.platformBrightness == Brightness.dark);
+    _themeMode = isCurrentlyDark ? ThemeMode.light : ThemeMode.dark;
+    notifyListeners();
+  }
 
   List<Wallet> get wallets => List.unmodifiable(_wallets);
   List<Category> get categories => List.unmodifiable(_categories);
@@ -109,6 +125,15 @@ class FinanceRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Budgets don't need [deleteTransaction]'s soft-delete (no sync/history
+  /// requirement on them), so this is a straightforward hard delete.
+  Future<void> deleteBudget(String budgetId) async {
+    final db = await _appDatabase.database;
+    await db.delete('budgets', where: 'id = ?', whereArgs: [budgetId]);
+    _budgets = _budgets.where((b) => b.id != budgetId).toList();
+    notifyListeners();
+  }
+
   /// Wallet balance, derived on the fly from active transactions (doc 4.2) —
   /// never stored. Transfers apply to both the source and target wallet.
   int balanceOf(String walletId) {
@@ -143,5 +168,21 @@ class FinanceRepository extends ChangeNotifier {
       }
     }
     return used;
+  }
+
+  /// Every [Budget] paired with its category and this month's usage,
+  /// sorted by usage percentage descending — shared by any screen that
+  /// ranks/displays budget progress (Beranda, Rangkuman, Anggaran).
+  List<BudgetStatus> get budgetStatuses {
+    final statuses = <BudgetStatus>[];
+    for (final budget in _budgets) {
+      final category = _categories.where((c) => c.id == budget.categoryId).firstOrNull;
+      if (category == null) continue;
+      final used = budgetUsageThisMonth(budget.categoryId);
+      final pct = budget.limitAmount == 0 ? 0 : (used * 100 / budget.limitAmount).round();
+      statuses.add(BudgetStatus(category: category, budget: budget, used: used, pct: pct));
+    }
+    statuses.sort((a, b) => b.pct.compareTo(a.pct));
+    return List.unmodifiable(statuses);
   }
 }

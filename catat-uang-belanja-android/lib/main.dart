@@ -36,11 +36,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => FinanceRepository()..load(),
-      child: MaterialApp(
-        title: 'Catat Uang Belanja',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        home: const AppShell(),
+      child: Builder(
+        builder: (context) {
+          final themeMode = context.watch<FinanceRepository>().themeMode;
+          return MaterialApp(
+            title: 'Catat Uang Belanja',
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: themeMode,
+            home: const AppShell(),
+          );
+        },
       ),
     );
   }
