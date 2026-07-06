@@ -42,6 +42,12 @@ There is no CI config in this repo; `flutter analyze` and `flutter test` are the
 - **Icons**: `lib/theme/app_icons.dart` maps category/wallet `iconValue` keys and one-off UI icons (nav bar, sync status, medals, etc.) to bundled Twemoji SVGs (`assets/icons/twemoji/`, rendered via `TwemojiIcon`/`flutter_svg`) — chosen over raw emoji glyphs so icons render identically (and in full color) across every device/OS instead of depending on the platform's emoji font. Twemoji is CC-BY 4.0; attribution lives in `assets/icons/twemoji/NOTICE.md` and is surfaced in-app under Pengaturan → Tentang Aplikasi.
 - **Fonts**: Baloo2 (headings) and Nunito (body) are bundled as local assets (see `pubspec.yaml`), not fetched via `google_fonts`, so the UI renders correctly offline on first launch.
 
+### Widget conventions
+
+- **One widget class per file.** Don't stack multiple widget classes (even small helper ones) in a single file — each gets its own file under `lib/screens/` or `lib/widgets/` (create the latter for shared/reusable widgets that aren't a full screen).
+- **Split every widget into a Stateful container + a Stateless view.** The `StatefulWidget`/`State` is the only place that reads `Provider` (`context.watch`/`context.read` on `FinanceRepository`), fetches data, and wires up callbacks; it builds a paired, purely-presentational `StatelessWidget` (e.g. `FooScreen` (Stateful) building `FooView` (Stateless)) and passes it everything it needs via constructor parameters. The Stateless view must never touch `Provider`, `Navigator`, or other `BuildContext`-scoped services directly — that keeps it cheap to construct in isolation.
+- **Give the Stateless view a `@Preview`.** Add a top-level function annotated with `@Preview(name: '...')` (from `package:flutter/widget_previews.dart`) next to the Stateless view that constructs it with representative sample data, so it can be inspected in the IDE/`flutter widget-preview` without wiring up `FinanceRepository` or SQLite.
+
 ### Testing notes
 
 - Widget tests need the FFI `sqflite` factory set up manually in `setUpAll` (`sqfliteFfiInit()` + `databaseFactory = databaseFactoryFfi`) since tests run on desktop, not a real device.

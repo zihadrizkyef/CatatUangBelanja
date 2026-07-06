@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -10,27 +11,14 @@ import '../repositories/finance_repository.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import '../widgets/category_chip.dart';
+import '../widgets/numeric_keypad.dart';
 
 final _currency = NumberFormat.currency(
   locale: 'id_ID',
   symbol: 'Rp',
   decimalDigits: 0,
 );
-
-const _keypadKeys = [
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  '7',
-  '8',
-  '9',
-  '⌫',
-  '0',
-  '✓',
-];
 
 /// Full-screen budget CRUD (was AnggaranScreen in the mockup) — pushed via
 /// [Navigator] from the "Kelola" links on Beranda/Rangkuman and Pengaturan's
@@ -54,100 +42,115 @@ class BudgetScreen extends StatelessWidget {
     final palette = AppPalette.of(context);
     final budgetStatuses = repository.budgetStatuses;
 
-    return Scaffold(
-      backgroundColor: palette.screenBg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
-              color: AppColors.accent,
-              child: Row(
-                children: [
-                  Material(
-                    color: Colors.white.withValues(alpha: 0.22),
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: Icon(
-                          Icons.chevron_left,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Anggaran 🎯',
-                    style: AppTheme.heading(fontSize: 18, color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
-                children: [
-                  if (budgetStatuses.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: Column(
-                        children: [
-                          const TwemojiIcon(AppIcons.budgetSeedling, size: 34),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Belum ada anggaran. Yuk buat yang pertama, Bun!',
-                            textAlign: TextAlign.center,
-                            style: AppTheme.body(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: palette.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    for (final status in budgetStatuses)
-                      _BudgetRow(
-                        status: status,
-                        palette: palette,
-                        onTap: () => _openSheet(context, existing: status),
-                      ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: Material(
-                      color: palette.warningBg,
-                      borderRadius: BorderRadius.circular(14),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: AppTheme.accentHeaderOverlay,
+      child: Scaffold(
+        backgroundColor: palette.screenBg,
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  MediaQuery.of(context).padding.top + 18,
+                  16,
+                  20,
+                ),
+                color: AppColors.accent,
+                child: Row(
+                  children: [
+                    Material(
+                      color: Colors.white.withValues(alpha: 0.22),
+                      shape: const CircleBorder(),
                       child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => Navigator.of(context).pop(),
+                        child: const SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: Icon(
+                            Icons.chevron_left,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Anggaran 🎯',
+                      style: AppTheme.heading(
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
+                  children: [
+                    if (budgetStatuses.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Column(
+                          children: [
+                            const TwemojiIcon(
+                              AppIcons.budgetSeedling,
+                              size: 34,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Belum ada anggaran. Yuk buat yang pertama, Bun!',
+                              textAlign: TextAlign.center,
+                              style: AppTheme.body(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: palette.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      for (final status in budgetStatuses)
+                        _BudgetRow(
+                          status: status,
+                          palette: palette,
+                          onTap: () => _openSheet(context, existing: status),
+                        ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Material(
+                        color: palette.warningBg,
                         borderRadius: BorderRadius.circular(14),
-                        onTap: () => _openSheet(context),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          child: Text(
-                            '+ Tambah Anggaran',
-                            textAlign: TextAlign.center,
-                            style: AppTheme.body(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: palette.warningText,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: () => _openSheet(context),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            child: Text(
+                              '+ Tambah Anggaran',
+                              textAlign: TextAlign.center,
+                              style: AppTheme.body(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: palette.warningText,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -380,9 +383,10 @@ class _BudgetSheetState extends State<BudgetSheet> {
                 runSpacing: 8,
                 children: [
                   for (final cat in categoryOptions)
-                    _CategoryChip(
+                    CategoryChip(
                       category: cat,
                       selected: _category?.id == cat.id,
+                      selectedColor: AppColors.gold,
                       palette: palette,
                       onTap: () => setState(() => _category = cat),
                     ),
@@ -435,37 +439,10 @@ class _BudgetSheetState extends State<BudgetSheet> {
               style: AppTheme.heading(fontSize: 30, color: palette.textPrimary),
             ),
             const SizedBox(height: 14),
-            GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 1.7,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                for (final k in _keypadKeys)
-                  Material(
-                    color: k == '✓'
-                        ? AppColors.gold
-                        : (k == '⌫' ? palette.chipNeutral : palette.chipKey),
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => _pressKey(k),
-                      child: Center(
-                        child: Text(
-                          k,
-                          style: AppTheme.heading(
-                            fontSize: 18,
-                            color: k == '✓'
-                                ? Colors.white
-                                : palette.textPrimary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+            NumericKeypad(
+              confirmColor: AppColors.gold,
+              palette: palette,
+              onKeyTap: _pressKey,
             ),
             if (_isEdit) ...[
               const SizedBox(height: 12),
@@ -482,60 +459,6 @@ class _BudgetSheetState extends State<BudgetSheet> {
               ),
             ],
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({
-    required this.category,
-    required this.selected,
-    required this.palette,
-    required this.onTap,
-  });
-
-  final models.Category category;
-  final bool selected;
-  final AppPalette palette;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final iconAsset = AppIcons.byIconValue[category.iconValue];
-    return Material(
-      color: selected ? palette.screenBg : palette.cardBg,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          width: 78,
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? AppColors.gold : palette.border,
-              width: 2,
-            ),
-          ),
-          child: Column(
-            children: [
-              if (iconAsset != null) TwemojiIcon(iconAsset, size: 20),
-              const SizedBox(height: 4),
-              Text(
-                category.name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                style: AppTheme.body(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: palette.textPrimary,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

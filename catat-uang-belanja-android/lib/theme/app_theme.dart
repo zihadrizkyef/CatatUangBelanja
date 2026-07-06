@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
 
@@ -10,6 +11,16 @@ class AppTheme {
 
   static const String headingFontFamily = 'Baloo2';
   static const String bodyFontFamily = 'Nunito';
+
+  /// Every tab header paints [AppColors.accent] (a mid-tone pink) behind the
+  /// status bar, in both light and dark mode — so the status bar itself must
+  /// stay transparent with light (white) icons/clock regardless of theme,
+  /// rather than following the default per-brightness system style.
+  static const SystemUiOverlayStyle accentHeaderOverlay = SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+  );
 
   static TextStyle heading({
     double fontSize = 22,
@@ -111,6 +122,7 @@ class AppPalette {
     required this.toastText,
     required this.overlay,
     required this.switchOff,
+    required this.cardShadow,
   });
 
   final Color pageBg;
@@ -131,6 +143,10 @@ class AppPalette {
   final Color overlay;
   final Color switchOff;
 
+  /// Drop shadow under elevated cards (e.g. Beranda's balance card) — darker
+  /// in dark mode so it still reads against a dark background.
+  final Color cardShadow;
+
   static const AppPalette light = AppPalette(
     pageBg: AppColors.lightPageBg,
     screenBg: AppColors.lightScreenBg,
@@ -149,6 +165,7 @@ class AppPalette {
     toastText: AppColors.lightToastText,
     overlay: AppColors.lightOverlay,
     switchOff: AppColors.lightSwitchOff,
+    cardShadow: Color.fromRGBO(0, 0, 0, 0.12),
   );
 
   static const AppPalette dark = AppPalette(
@@ -169,6 +186,7 @@ class AppPalette {
     toastText: AppColors.darkToastText,
     overlay: AppColors.darkOverlay,
     switchOff: AppColors.darkSwitchOff,
+    cardShadow: Color.fromRGBO(0, 0, 0, 0.35),
   );
 
   factory AppPalette.forBrightness(Brightness brightness) =>

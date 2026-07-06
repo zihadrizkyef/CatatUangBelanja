@@ -9,21 +9,8 @@ import '../repositories/finance_repository.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
-
-const _keypadKeys = [
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  '7',
-  '8',
-  '9',
-  '⌫',
-  '0',
-  '✓',
-];
+import '../widgets/category_chip.dart';
+import '../widgets/numeric_keypad.dart';
 
 /// Opened from AppShell's "+" FAB (doc 6.2): expense/income toggle, amount
 /// keypad, category grid, and a wallet chip that cycles through wallets on
@@ -200,10 +187,10 @@ class _TransactionSheetState extends State<TransactionSheet> {
               runSpacing: 8,
               children: [
                 for (final cat in categories)
-                  _CategoryChip(
+                  CategoryChip(
                     category: cat,
                     selected: _category?.id == cat.id,
-                    accent: accent,
+                    selectedColor: accent,
                     palette: palette,
                     onTap: () => setState(() => _category = cat),
                   ),
@@ -247,37 +234,10 @@ class _TransactionSheetState extends State<TransactionSheet> {
                 ),
               ),
             const SizedBox(height: 14),
-            GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 1.7,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                for (final k in _keypadKeys)
-                  Material(
-                    color: k == '✓'
-                        ? accent
-                        : (k == '⌫' ? palette.chipNeutral : palette.chipKey),
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => _pressKey(k),
-                      child: Center(
-                        child: Text(
-                          k,
-                          style: AppTheme.heading(
-                            fontSize: 18,
-                            color: k == '✓'
-                                ? Colors.white
-                                : palette.textPrimary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+            NumericKeypad(
+              confirmColor: accent,
+              palette: palette,
+              onKeyTap: _pressKey,
             ),
           ],
         ),
@@ -319,62 +279,6 @@ class _SegmentButton extends StatelessWidget {
                   ? Colors.white
                   : AppPalette.of(context).textSecondary,
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({
-    required this.category,
-    required this.selected,
-    required this.accent,
-    required this.palette,
-    required this.onTap,
-  });
-
-  final models.Category category;
-  final bool selected;
-  final Color accent;
-  final AppPalette palette;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final iconAsset = AppIcons.byIconValue[category.iconValue];
-    return Material(
-      color: selected ? palette.screenBg : palette.cardBg,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          width: 78,
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? accent : palette.border,
-              width: 2,
-            ),
-          ),
-          child: Column(
-            children: [
-              if (iconAsset != null) TwemojiIcon(iconAsset, size: 20),
-              const SizedBox(height: 4),
-              Text(
-                category.name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                style: AppTheme.body(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: palette.textPrimary,
-                ),
-              ),
-            ],
           ),
         ),
       ),

@@ -21,7 +21,7 @@ class AppDatabase {
   static final AppDatabase instance = AppDatabase._();
 
   static const _dbName = 'catat_uang_belanja.db';
-  static const _dbVersion = 1;
+  static const _dbVersion = 2;
 
   Database? _database;
 
@@ -105,11 +105,27 @@ class AppDatabase {
       )
     ''');
 
+    await _createSettingsTable(db);
+
     await _seed(db);
   }
 
-  // ignore: unused_element
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {}
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await _createSettingsTable(db);
+    }
+  }
+
+  /// Simple key-value store for app-wide preferences (e.g. `theme_mode`) that
+  /// don't warrant their own typed table.
+  Future<void> _createSettingsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+  }
 
   Future<void> _seed(Database db) async {
     const uuid = Uuid();

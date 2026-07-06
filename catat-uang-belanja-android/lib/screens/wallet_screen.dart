@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -11,7 +12,11 @@ import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../theme/dashed_line.dart';
 
-final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
+final _currency = NumberFormat.currency(
+  locale: 'id_ID',
+  symbol: 'Rp',
+  decimalDigits: 0,
+);
 
 /// Fixed pastel circle behind every wallet icon, per the mockup (hardcoded
 /// `#FCE0E1` regardless of light/dark theme).
@@ -35,7 +40,10 @@ class WalletScreen extends StatelessWidget {
 
   void _showComingSoon(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Segera hadir ✨'), duration: Duration(milliseconds: 1200)),
+      const SnackBar(
+        content: Text('Segera hadir ✨'),
+        duration: Duration(milliseconds: 1200),
+      ),
     );
   }
 
@@ -48,107 +56,156 @@ class WalletScreen extends StatelessWidget {
     final transactions = repository.transactions.toList()
       ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
 
-    return Scaffold(
-      backgroundColor: palette.screenBg,
-      body: SafeArea(
-        bottom: false,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 22, 20, 26),
-              color: AppColors.accent,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Dompet 👛', style: AppTheme.heading(fontSize: 21, color: Colors.white)),
-                  const SizedBox(height: 16),
-                  DashedLine(color: Colors.white.withValues(alpha: 0.4)),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Total di Semua Dompet',
-                    style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.85)),
-                  ),
-                  Text(
-                    _currency.format(repository.totalBalance),
-                    style: AppTheme.heading(fontSize: 34, color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Dompet Saya', style: AppTheme.heading(fontSize: 13, color: palette.textPrimary)),
-                  const SizedBox(height: 10),
-                  for (var i = 0; i < wallets.length; i++)
-                    _WalletCard(
-                      wallet: wallets[i],
-                      indexLabel: '${i + 1}/${wallets.length}',
-                      balance: repository.balanceOf(wallets[i].id),
-                      palette: palette,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: AppTheme.accentHeaderOverlay,
+      child: Scaffold(
+        backgroundColor: palette.screenBg,
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  MediaQuery.of(context).padding.top + 22,
+                  20,
+                  26,
+                ),
+                color: AppColors.accent,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Dompet 👛',
+                      style: AppTheme.heading(
+                        fontSize: 21,
+                        color: Colors.white,
+                      ),
                     ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: Material(
-                      color: palette.warningBg,
-                      borderRadius: BorderRadius.circular(14),
-                      child: InkWell(
+                    const SizedBox(height: 16),
+                    DashedLine(color: Colors.white.withValues(alpha: 0.4)),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Total di Semua Dompet',
+                      style: AppTheme.body(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                    ),
+                    Text(
+                      _currency.format(repository.totalBalance),
+                      style: AppTheme.heading(
+                        fontSize: 34,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Dompet Saya',
+                      style: AppTheme.heading(
+                        fontSize: 13,
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    for (var i = 0; i < wallets.length; i++)
+                      _WalletCard(
+                        wallet: wallets[i],
+                        indexLabel: '${i + 1}/${wallets.length}',
+                        balance: repository.balanceOf(wallets[i].id),
+                        palette: palette,
+                      ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Material(
+                        color: palette.warningBg,
                         borderRadius: BorderRadius.circular(14),
-                        onTap: () => _showComingSoon(context),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          child: Text(
-                            '+ Tambah Dompet',
-                            textAlign: TextAlign.center,
-                            style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.warningText),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: () => _showComingSoon(context),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            child: Text(
+                              '+ Tambah Dompet',
+                              textAlign: TextAlign.center,
+                              style: AppTheme.body(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: palette.warningText,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 22, 16, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Riwayat Transaksi', style: AppTheme.heading(fontSize: 13, color: palette.textPrimary)),
-                  const SizedBox(height: 6),
-                  if (transactions.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 34),
-                      child: Column(
-                        children: [
-                          const TwemojiIcon(AppIcons.emptyReceipt, size: 32),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Belum ada transaksi di dompet ini, Bun.',
-                            textAlign: TextAlign.center,
-                            style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.textSecondary),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 22, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Riwayat Transaksi',
+                      style: AppTheme.heading(
+                        fontSize: 13,
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    if (transactions.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 34),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: Column(
+                            children: [
+                              const TwemojiIcon(AppIcons.emptyReceipt, size: 32),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Belum ada transaksi di dompet ini, Bun.',
+                                textAlign: TextAlign.center,
+                                style: AppTheme.body(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: palette.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    )
-                  else
-                    for (final t in transactions)
-                      _TransactionHistoryRow(
-                        transaction: t,
-                        category: repository.categories.where((c) => c.id == t.categoryId).firstOrNull,
-                        wallet: repository.wallets.where((w) => w.id == t.walletId).firstOrNull,
-                        relativeDate: _relativeDate(t.dateTime),
-                        palette: palette,
-                      ),
-                ],
+                        ),
+                      )
+                    else
+                      for (final t in transactions)
+                        _TransactionHistoryRow(
+                          transaction: t,
+                          category: repository.categories
+                              .where((c) => c.id == t.categoryId)
+                              .firstOrNull,
+                          wallet: repository.wallets
+                              .where((w) => w.id == t.walletId)
+                              .firstOrNull,
+                          relativeDate: _relativeDate(t.dateTime),
+                          palette: palette,
+                        ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -156,7 +213,12 @@ class WalletScreen extends StatelessWidget {
 }
 
 class _WalletCard extends StatelessWidget {
-  const _WalletCard({required this.wallet, required this.indexLabel, required this.balance, required this.palette});
+  const _WalletCard({
+    required this.wallet,
+    required this.indexLabel,
+    required this.balance,
+    required this.palette,
+  });
 
   final Wallet wallet;
   final String indexLabel;
@@ -179,19 +241,40 @@ class _WalletCard extends StatelessWidget {
           Container(
             width: 42,
             height: 42,
-            decoration: const BoxDecoration(color: _walletIconBg, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: _walletIconBg,
+              shape: BoxShape.circle,
+            ),
             alignment: Alignment.center,
             child: iconAsset != null
                 ? TwemojiIcon(iconAsset, size: 19)
-                : Icon(Icons.account_balance_wallet_rounded, size: 18, color: palette.textPrimary),
+                : Icon(
+                    Icons.account_balance_wallet_rounded,
+                    size: 18,
+                    color: palette.textPrimary,
+                  ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(wallet.name, style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: palette.textPrimary)),
-                Text('Rekening $indexLabel', style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: palette.textSecondary)),
+                Text(
+                  wallet.name,
+                  style: AppTheme.body(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: palette.textPrimary,
+                  ),
+                ),
+                Text(
+                  'Rekening $indexLabel',
+                  style: AppTheme.body(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: palette.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -224,8 +307,12 @@ class _TransactionHistoryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
     final label = category?.name ?? (isIncome ? 'Pemasukan' : 'Pengeluaran');
-    final sub = (transaction.note?.isNotEmpty ?? false) ? transaction.note! : (wallet?.name ?? '');
-    final iconAsset = category != null ? AppIcons.byIconValue[category!.iconValue] : null;
+    final sub = (transaction.note?.isNotEmpty ?? false)
+        ? transaction.note!
+        : (wallet?.name ?? '');
+    final iconAsset = category != null
+        ? AppIcons.byIconValue[category!.iconValue]
+        : null;
 
     return Column(
       children: [
@@ -235,20 +322,42 @@ class _TransactionHistoryRow extends StatelessWidget {
             children: [
               iconAsset != null
                   ? TwemojiIcon(iconAsset, size: 16)
-                  : Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, size: 14, color: palette.textPrimary),
+                  : Icon(
+                      isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                      size: 14,
+                      color: palette.textPrimary,
+                    ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label, style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.textPrimary)),
-                    Text('$sub · $relativeDate', style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: palette.textSecondary)),
+                    Text(
+                      label,
+                      style: AppTheme.body(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '$sub · $relativeDate',
+                      style: AppTheme.body(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: palette.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
               Text(
                 '${isIncome ? '+' : '-'}${_currency.format(transaction.amount)}',
-                style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: isIncome ? AppColors.gold : AppColors.peach),
+                style: AppTheme.body(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: isIncome ? AppColors.gold : AppColors.peach,
+                ),
               ),
             ],
           ),
