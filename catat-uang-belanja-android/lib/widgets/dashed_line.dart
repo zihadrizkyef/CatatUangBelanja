@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 
 /// Horizontal dashed divider matching the mockups' `border: 1px dashed ...`
 /// styling (hero header dividers, transaction row separators).
@@ -40,4 +41,9 @@ class _DashedLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(_DashedLinePainter oldDelegate) =>
       oldDelegate.color != color || oldDelegate.dashWidth != dashWidth || oldDelegate.gap != gap;
+}
+
+@Preview(name: 'DashedLine')
+Widget previewDashedLine() {
+  return const DashedLine(color: Colors.grey);
 }

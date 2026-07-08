@@ -9,13 +9,14 @@ import '../models/category.dart' as models;
 import '../models/icon_type.dart';
 import '../models/transaction.dart';
 import '../models/wallet.dart';
+import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
-import 'empty_transactions_card.dart';
-import 'hero_banner.dart';
-import 'home_transaction_row.dart';
-import 'no_budget_banner.dart';
-import 'safe_budget_banner.dart';
-import 'warning_budget_banner.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/hero_banner.dart';
+import '../widgets/home_transaction_row.dart';
+import '../widgets/no_budget_banner.dart';
+import '../widgets/safe_budget_banner.dart';
+import '../widgets/warning_budget_banner.dart';
 
 final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
@@ -131,7 +132,11 @@ class HomeView extends StatelessWidget {
                         ],
                       ),
                       if (recentTransactions.isEmpty)
-                        EmptyTransactionsCard(palette: palette)
+                        EmptyState(
+                          palette: palette,
+                          icon: AppIcons.emptyReceipt,
+                          title: 'Belum ada transaksi, Bun. Yuk catat yang pertama.',
+                        )
                       else
                         Column(
                           children: [

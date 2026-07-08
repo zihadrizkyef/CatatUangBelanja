@@ -6,6 +6,7 @@ import '../models/icon_type.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import 'twemoji_icon.dart';
 
 /// Selectable category tile used by the amount-entry sheets (transaction and
 /// budget). [selectedColor] is the accent used for the border/highlight when
@@ -37,7 +38,7 @@ class CategoryChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Container(
-          width: 78,
+          width: 92,
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
@@ -48,7 +49,7 @@ class CategoryChip extends StatelessWidget {
           ),
           child: Column(
             children: [
-              if (iconAsset != null) TwemojiIcon(iconAsset, size: 20),
+              if (iconAsset != null) TwemojiIcon(iconAsset, size: 32),
               const SizedBox(height: 4),
               Text(
                 category.name,

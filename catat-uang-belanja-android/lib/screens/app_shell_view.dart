@@ -3,6 +3,7 @@ import 'package:flutter/widget_previews.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
+import '../widgets/twemoji_icon.dart';
 import '../theme/app_theme.dart';
 
 class NavItem {
@@ -75,7 +76,7 @@ class AppShellView extends StatelessWidget {
                           children: [
                             Opacity(
                               opacity: currentIndex == i ? 1 : 0.45,
-                              child: TwemojiIcon(navItems[i].icon, size: 20),
+                              child: TwemojiIcon(navItems[i].icon, size: 32),
                             ),
                             const SizedBox(height: 2),
                             Text(

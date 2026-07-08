@@ -8,6 +8,7 @@ import '../models/transaction.dart';
 import '../models/wallet.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
+import 'twemoji_icon.dart';
 import '../theme/app_theme.dart';
 
 final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
@@ -40,17 +41,29 @@ class HomeTransactionRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(color: palette.cardBg, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(
+        color: palette.cardBg,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: palette.cardShadow, blurRadius: 12, offset: const Offset(0, 4))],
+      ),
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            alignment: Alignment.center,
-            child: iconAsset != null
-                ? TwemojiIcon(iconAsset, size: 18)
-                : Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, size: 16, color: palette.textPrimary),
+          SizedBox(
+            width: 46,
+            height: 46,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+                ),
+                iconAsset != null
+                    ? TwemojiIcon(iconAsset, size: 45)
+                    : Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, size: 36, color: palette.textPrimary),
+              ],
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(

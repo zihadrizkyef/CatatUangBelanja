@@ -9,6 +9,7 @@ import '../models/icon_type.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import 'twemoji_icon.dart';
 
 final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
@@ -26,17 +27,29 @@ class WarningBudgetBanner extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 8, bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(color: palette.warningBg, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(
+        color: palette.warningBg,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: palette.cardShadow, blurRadius: 12, offset: const Offset(0, 4))],
+      ),
       child: Column(
         children: [
           Row(
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(color: palette.cardBg, shape: BoxShape.circle),
-                alignment: Alignment.center,
-                child: TwemojiIcon(AppIcons.byIconValue[status.category.iconValue] ?? AppIcons.budgetTarget, size: 18),
+              SizedBox(
+                width: 46,
+                height: 46,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(color: palette.cardBg, shape: BoxShape.circle),
+                    ),
+                    TwemojiIcon(AppIcons.byIconValue[status.category.iconValue] ?? AppIcons.budgetTarget, size: 45),
+                  ],
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(

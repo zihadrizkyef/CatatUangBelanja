@@ -1,6 +1,3 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
 /// Bundled Twemoji SVGs (see assets/icons/twemoji/NOTICE.md for the required
 /// CC-BY 4.0 attribution, also surfaced in SettingsScreen > Tentang
 /// Aplikasi) so category/wallet/status icons render identically on every
@@ -61,19 +58,4 @@ class AppIcons {
     'wallet_bank': '$_base/bank.svg',
     'wallet_ewallet': '$_base/mobile_phone.svg',
   };
-}
-
-/// Shared render for any icon referenced by an `assets/icons/twemoji/*.svg`
-/// path — used for both DB-backed category/wallet icons ([AppIcons.byIconValue])
-/// and one-off UI icons ([AppIcons]'s named constants.
-class TwemojiIcon extends StatelessWidget {
-  const TwemojiIcon(this.asset, {super.key, this.size = 20});
-
-  final String asset;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return SvgPicture.asset(asset, width: size, height: size);
-  }
 }

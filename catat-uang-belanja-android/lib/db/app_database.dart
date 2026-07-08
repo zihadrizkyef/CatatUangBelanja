@@ -127,7 +127,23 @@ class AppDatabase {
     ''');
   }
 
-  Future<void> _seed(Database db) async {
+  /// Wipes wallets/categories/transactions/budgets and reseeds the default
+  /// cash wallet + system categories, all inside one transaction so a crash
+  /// mid-wipe can't leave the app with no wallets and no reseed. Leaves the
+  /// `settings` table (e.g. theme mode) alone — that's a device preference,
+  /// not app data.
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('transactions');
+      await txn.delete('budgets');
+      await txn.delete('categories');
+      await txn.delete('wallets');
+      await _seed(txn);
+    });
+  }
+
+  Future<void> _seed(DatabaseExecutor db) async {
     const uuid = Uuid();
     final now = DateTime.now();
 

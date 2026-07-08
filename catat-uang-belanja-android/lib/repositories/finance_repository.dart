@@ -376,6 +376,15 @@ class FinanceRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Wipes all wallets, categories, transactions, and budgets, then reseeds
+  /// the default cash wallet and system categories — wired to the "Hapus
+  /// Semua Data" action in Pengaturan. Leaves [themeMode] untouched since
+  /// that's a device preference, not app data.
+  Future<void> clearAllData() async {
+    await _appDatabase.clearAllData();
+    await load();
+  }
+
   /// Every [Budget] paired with its category and this month's usage,
   /// sorted by usage percentage descending — shared by any screen that
   /// ranks/displays budget progress (Beranda, Rangkuman, Anggaran).

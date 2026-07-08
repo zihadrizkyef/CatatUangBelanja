@@ -4,6 +4,7 @@ import 'package:flutter/widget_previews.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import 'twemoji_icon.dart';
 
 /// Beranda's accent-colored header: time-of-day greeting plus a tappable
 /// "Offline" sync-status pill.
@@ -46,7 +47,7 @@ class HeroBanner extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const TwemojiIcon(AppIcons.syncOffline, size: 14),
+                    const TwemojiIcon(AppIcons.syncOffline, size: 18),
                     const SizedBox(width: 5),
                     Text('Offline', style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
                   ],
