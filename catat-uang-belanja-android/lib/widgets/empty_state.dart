@@ -4,13 +4,15 @@ import 'package:flutter/widget_previews.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
-import 'twemoji_icon.dart';
+import 'dashed_border_box.dart';
+import 'openmoji_icon.dart';
 
 /// Generic empty-state placeholder (icon + title, optional call-to-action
 /// button) for any list/section that has no data yet — e.g. no transactions,
-/// no wallets, no budgets. Doesn't add its own outer padding or decoration
-/// so callers that need a bordered "card" look (see `ChartEmptyState`) or
-/// extra spacing wrap it themselves.
+/// no wallets, no budgets. Two shapes per the mockups: [bordered] (default)
+/// draws a bordered/tinted card, used for secondary sections (charts,
+/// wallet/budget lists); non-bordered renders as a plain centered block,
+/// used for the larger "belum ada transaksi" placeholders.
 class EmptyState extends StatelessWidget {
   const EmptyState({
     super.key,
@@ -18,6 +20,7 @@ class EmptyState extends StatelessWidget {
     required this.icon,
     required this.title,
     this.iconSize = 56,
+    this.bordered = true,
     this.buttonLabel,
     this.onButtonTap,
   });
@@ -26,6 +29,7 @@ class EmptyState extends StatelessWidget {
   final String icon;
   final String title;
   final double iconSize;
+  final bool bordered;
   final String? buttonLabel;
   final VoidCallback? onButtonTap;
 
@@ -33,11 +37,13 @@ class EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasButton = buttonLabel != null && onButtonTap != null;
 
-    return SizedBox(
+    final card = Container(
       width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: bordered ? 28 : 34, horizontal: 16),
+      decoration: bordered ? BoxDecoration(color: palette.cardBg, borderRadius: BorderRadius.circular(16)) : null,
       child: Column(
         children: [
-          TwemojiIcon(icon, size: iconSize),
+          OpenMojiIcon(icon, size: iconSize),
           const SizedBox(height: 10),
           Text(
             title,
@@ -45,20 +51,30 @@ class EmptyState extends StatelessWidget {
             style: AppTheme.body(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: hasButton ? palette.textPrimary : palette.textSecondary,
+              color: bordered ? palette.textPrimary : palette.textSecondary,
             ),
           ),
           if (hasButton) ...[
             const SizedBox(height: 12),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               onPressed: onButtonTap,
-              child: Text(buttonLabel!),
+              child: Text(
+                buttonLabel!,
+                style: AppTheme.body(fontSize: 12.5, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
             ),
           ],
         ],
       ),
     );
+
+    if (!bordered) return card;
+    return DashedBorderBox(color: palette.borderStrong, borderRadius: 16, child: card);
   }
 }
 

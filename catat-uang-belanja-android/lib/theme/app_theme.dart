@@ -13,14 +13,27 @@ class AppTheme {
   static const String bodyFontFamily = 'Nunito';
 
   /// Every tab header paints [AppColors.accent] (a mid-tone pink) behind the
-  /// status bar, in both light and dark mode — so the status bar itself must
-  /// stay transparent with light (white) icons/clock regardless of theme,
-  /// rather than following the default per-brightness system style.
+  /// status bar, in both light and dark mode — so the status bar itself is
+  /// set to that same pink with dark icons/clock for contrast, regardless of
+  /// theme, rather than following the default per-brightness system style.
   static const SystemUiOverlayStyle accentHeaderOverlay = SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    statusBarBrightness: Brightness.dark,
+    statusBarColor: AppColors.accent,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
   );
+
+  /// The Android system navigation bar, matched to the bottom nav bar's own
+  /// background ([AppPalette.navBg]) with dark buttons for contrast — applied
+  /// once around the whole [AppShellView] since only it, not the individual
+  /// tab screens, extends down to the bottom of the display.
+  static SystemUiOverlayStyle navigationBarOverlay(AppPalette palette) {
+    return SystemUiOverlayStyle(
+      systemNavigationBarColor: palette.navBg,
+      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarDividerColor: palette.navBg,
+      systemNavigationBarContrastEnforced: false,
+    );
+  }
 
   static TextStyle heading({
     double fontSize = 22,

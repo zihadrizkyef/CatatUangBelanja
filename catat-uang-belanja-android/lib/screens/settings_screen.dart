@@ -97,8 +97,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Text('Bantu Bunda mencatat belanja rumah tangga sehari-hari.', style: AppTheme.body(fontSize: 13)),
             const SizedBox(height: 16),
             Text(
-              'Ikon dalam aplikasi ini menggunakan Twemoji, © Twitter, Inc dan '
-              'kontributor, dengan lisensi Creative Commons Attribution 4.0 (CC-BY 4.0).',
+              'Ikon dalam aplikasi ini menggunakan OpenMoji, dengan lisensi Creative '
+              'Commons Attribution-ShareAlike 4.0 (CC BY-SA 4.0).',
               style: AppTheme.body(fontSize: 12),
             ),
           ],

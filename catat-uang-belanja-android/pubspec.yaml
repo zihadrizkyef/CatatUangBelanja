@@ -48,7 +48,7 @@ dependencies:
   uuid: ^4.5.1
   # Rupiah currency formatting + date formatting
   intl: ^0.20.2
-  # Renders bundled Twemoji SVGs so category/wallet/status icons look identical
+  # Renders bundled OpenMoji SVGs so category/wallet/status icons look identical
   # across every device and OS, instead of relying on the platform's emoji font.
   flutter_svg: ^2.0.10+1
 
@@ -63,6 +63,21 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # Generates Android/iOS launcher icons from assets/icon/*.png (dev-time only,
+  # run via `dart run flutter_launcher_icons`) — see flutter_launcher_icons: below.
+  flutter_launcher_icons: ^0.14.4
+
+# Wallet + coin app icon (see Draft Aplikasi Pencatatan Keuangan.md section 2 for
+# the palette). Regenerate with `dart run flutter_launcher_icons` after editing
+# the source PNGs in assets/icon/.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#E8637C"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  remove_alpha_ios: true
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -74,11 +89,11 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # Twemoji SVGs (see assets/icons/twemoji/NOTICE.md for license/attribution)
+  # OpenMoji SVGs (see assets/icons/openmoji/NOTICE.md for license/attribution)
   # used for category/wallet/status icons so they render identically on every
   # device and OS instead of depending on the platform's emoji font.
   assets:
-    - assets/icons/twemoji/
+    - assets/icons/openmoji/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

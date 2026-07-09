@@ -12,7 +12,7 @@ import '../theme/app_theme.dart';
 import '../widgets/category_chip.dart';
 import '../widgets/numeric_keypad.dart';
 import '../widgets/segment_button.dart';
-import '../widgets/twemoji_icon.dart';
+import '../widgets/openmoji_icon.dart';
 
 /// Pure layout for [TransactionSheet]: expense/income toggle, amount keypad,
 /// category grid, and a wallet chip. All data/callbacks come from the
@@ -143,7 +143,7 @@ class TransactionSheetView extends StatelessWidget {
                       child: Row(
                         children: [
                           if (AppIcons.byIconValue[wallet!.iconValue] != null)
-                            TwemojiIcon(AppIcons.byIconValue[wallet!.iconValue]!, size: 24),
+                            OpenMojiIcon(AppIcons.byIconValue[wallet!.iconValue]!, size: 25),
                           const SizedBox(width: 8),
                           Text(
                             'Dompet: ${wallet!.name}',

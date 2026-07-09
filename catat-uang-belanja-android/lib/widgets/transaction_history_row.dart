@@ -10,7 +10,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import 'dashed_line.dart';
-import 'twemoji_icon.dart';
+import 'openmoji_icon.dart';
 
 final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
@@ -46,8 +46,8 @@ class TransactionHistoryRow extends StatelessWidget {
           child: Row(
             children: [
               iconAsset != null
-                  ? TwemojiIcon(iconAsset, size: 24)
-                  : Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, size: 22, color: palette.textPrimary),
+                  ? OpenMojiIcon(iconAsset, size: 28)
+                  : Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, size: 26, color: palette.textPrimary),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(

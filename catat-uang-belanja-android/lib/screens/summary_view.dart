@@ -15,7 +15,7 @@ import '../widgets/donut_chart.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/top_spending_row.dart';
 import '../widgets/trend_chart.dart';
-import '../widgets/twemoji_icon.dart';
+import '../widgets/openmoji_icon.dart';
 
 final _currency = NumberFormat.currency(
   locale: 'id_ID',
@@ -241,6 +241,7 @@ class SummaryView extends StatelessWidget {
                     if (legendData.isEmpty)
                       ChartEmptyState(
                         palette: palette,
+                        icon: AppIcons.emptyExpensePie,
                         message: 'Belum ada pengeluaran periode ini, Bun.',
                       )
                     else
@@ -268,7 +269,7 @@ class SummaryView extends StatelessWidget {
                     if (buckets.every(
                       (b) => b.income == 0 && b.expense == 0,
                     ))
-                      ChartEmptyState(palette: palette)
+                      ChartEmptyState(palette: palette, icon: AppIcons.emptyTrend)
                     else
                       Container(
                         padding: const EdgeInsets.fromLTRB(0, 12, 14, 8),
@@ -311,25 +312,13 @@ class SummaryView extends StatelessWidget {
                       ],
                     ),
                     if (budgetStatuses.isEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: palette.cardBg,
-                          border: Border.all(
-                            color: palette.borderStrong,
-                            style: BorderStyle.solid,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: EmptyState(
-                          palette: palette,
-                          icon: AppIcons.budgetSeedling,
-                          iconSize: 46,
-                          title: 'Belum ada anggaran, Bun. Yuk mulai atur biar pengeluaran lebih terkontrol!',
-                          buttonLabel: '+ Buat Anggaran',
-                          onButtonTap: onOpenBudget,
-                        ),
+                      EmptyState(
+                        palette: palette,
+                        icon: AppIcons.budgetSeedling,
+                        iconSize: 42,
+                        title: 'Belum ada anggaran, Bun. Yuk mulai atur biar pengeluaran lebih terkontrol!',
+                        buttonLabel: '+ Buat Anggaran',
+                        onButtonTap: onOpenBudget,
                       )
                     else
                       Column(
@@ -342,6 +331,10 @@ class SummaryView extends StatelessWidget {
                                 children: [
                                   Row(
                                     children: [
+                                      if (AppIcons.byIconValue[b.category.iconValue] != null) ...[
+                                        OpenMojiIcon(AppIcons.byIconValue[b.category.iconValue]!, size: 22),
+                                        const SizedBox(width: 4),
+                                      ],
                                       Expanded(
                                         child: Text(
                                           b.category.name,
@@ -399,12 +392,11 @@ class SummaryView extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     if (budgetStatuses.isEmpty)
-                      Text(
-                        'Belum ada anggaran untuk dirangking.',
-                        style: AppTheme.body(
-                          fontSize: 13,
-                          color: palette.textSecondary,
-                        ),
+                      EmptyState(
+                        palette: palette,
+                        icon: AppIcons.trophy,
+                        iconSize: 42,
+                        title: 'Belum ada pengeluaran untuk dirangking, Bun.',
                       )
                     else
                       for (var i = 0; i < budgetStatuses.length; i++)
@@ -425,7 +417,7 @@ class SummaryView extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            const TwemojiIcon(AppIcons.appreciation, size: 36),
+                            const OpenMojiIcon(AppIcons.appreciation, size: 34),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(

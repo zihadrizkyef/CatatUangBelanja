@@ -28,11 +28,11 @@ class FinanceRepository extends ChangeNotifier {
   List<Transaction> _transactions = [];
   List<Budget> _budgets = [];
 
-  /// Defaults to following the OS setting; [toggleDarkMode] pins it to an
+  /// Defaults to light on a fresh install; [toggleDarkMode] pins it to an
   /// explicit light/dark choice, mirroring the mockup's own
   /// override-vs-system-preference behavior. Persisted to the `settings`
   /// table so the choice survives app restarts.
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
   ThemeMode get themeMode => _themeMode;
 
   static const _themeModeKey = 'theme_mode';

@@ -14,7 +14,7 @@ import '../theme/app_theme.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/hero_banner.dart';
 import '../widgets/home_transaction_row.dart';
-import '../widgets/no_budget_banner.dart';
+import '../widgets/openmoji_icon.dart';
 import '../widgets/safe_budget_banner.dart';
 import '../widgets/warning_budget_banner.dart';
 
@@ -119,7 +119,29 @@ class HomeView extends StatelessWidget {
                       else if (budgetStatuses.isNotEmpty)
                         SafeBudgetBanner(palette: palette)
                       else
-                        NoBudgetBanner(palette: palette, onTap: onOpenBudget),
+                        Material(
+                          color: palette.chipNeutral,
+                          borderRadius: BorderRadius.circular(18),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(18),
+                            onTap: onOpenBudget,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  const OpenMojiIcon(AppIcons.budgetTarget, size: 31),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Belum ada anggaran, Bun. Yuk mulai atur biar pengeluaran lebih terkontrol!',
+                                      style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.textPrimary),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -135,6 +157,8 @@ class HomeView extends StatelessWidget {
                         EmptyState(
                           palette: palette,
                           icon: AppIcons.emptyReceipt,
+                          iconSize: 45,
+                          bordered: false,
                           title: 'Belum ada transaksi, Bun. Yuk catat yang pertama.',
                         )
                       else

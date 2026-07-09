@@ -3,7 +3,7 @@ import 'package:flutter/widget_previews.dart';
 
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
-import 'twemoji_icon.dart';
+import 'openmoji_icon.dart';
 
 /// Beranda's "all budgets healthy" callout — shown when at least one budget
 /// exists and none is at/above 80% usage.
@@ -24,7 +24,7 @@ class SafeBudgetBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const TwemojiIcon(AppIcons.budgetSafe, size: 34),
+          const OpenMojiIcon(AppIcons.budgetSafe, size: 34),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

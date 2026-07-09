@@ -6,7 +6,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../widgets/section_label.dart';
-import '../widgets/twemoji_icon.dart';
+import '../widgets/openmoji_icon.dart';
 
 class SettingItem {
   const SettingItem(this.icon, this.label, this.onTap);
@@ -88,11 +88,11 @@ class SettingsView extends StatelessWidget {
                         Row(
                           children: [
                             Container(
-                              width: 68,
-                              height: 68,
+                              width: 73,
+                              height: 73,
                               decoration: const BoxDecoration(color: Color(0xFFFCE0E1), shape: BoxShape.circle),
                               alignment: Alignment.center,
-                              child: const TwemojiIcon(AppIcons.profileAvatar, size: 36),
+                              child: const OpenMojiIcon(AppIcons.profileAvatar, size: 34),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -138,7 +138,7 @@ class SettingsView extends StatelessWidget {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const TwemojiIcon(AppIcons.magic, size: 24),
+                                    const OpenMojiIcon(AppIcons.magic, size: 24),
                                     const SizedBox(width: 8),
                                     Text(
                                       'Generate Data Dummy',
@@ -171,7 +171,7 @@ class SettingsView extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                         child: Row(
                           children: [
-                            const TwemojiIcon(AppIcons.darkMode, size: 26),
+                            const OpenMojiIcon(AppIcons.darkMode, size: 24),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -216,7 +216,7 @@ class SettingsView extends StatelessWidget {
                                     ),
                                     child: Row(
                                       children: [
-                                        TwemojiIcon(group.items[i].icon, size: 26),
+                                        OpenMojiIcon(group.items[i].icon, size: 31),
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Text(

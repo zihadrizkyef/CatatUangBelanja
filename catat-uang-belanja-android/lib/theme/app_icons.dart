@@ -1,11 +1,11 @@
-/// Bundled Twemoji SVGs (see assets/icons/twemoji/NOTICE.md for the required
-/// CC-BY 4.0 attribution, also surfaced in SettingsScreen > Tentang
-/// Aplikasi) so category/wallet/status icons render identically on every
-/// device and OS, instead of depending on the platform's emoji font.
+/// Bundled OpenMoji SVGs (see assets/icons/openmoji/NOTICE.md for the
+/// required CC-BY-SA 4.0 attribution, also surfaced in SettingsScreen >
+/// Tentang Aplikasi) so category/wallet/status icons render identically on
+/// every device and OS, instead of depending on the platform's emoji font.
 class AppIcons {
   AppIcons._();
 
-  static const String _base = 'assets/icons/twemoji';
+  static const String _base = 'assets/icons/openmoji';
 
   static const String home = '$_base/house.svg';
   static const String wallet = '$_base/purse.svg';
@@ -21,6 +21,9 @@ class AppIcons {
   static const String budgetSeedling = '$_base/seedling.svg';
   static const String emptyReceipt = '$_base/receipt.svg';
   static const String appreciation = '$_base/party_popper.svg';
+  static const String emptyExpensePie = '$_base/pie.svg';
+  static const String emptyTrend = '$_base/chart_increasing.svg';
+  static const String trophy = '$_base/trophy.svg';
 
   static const String medal1 = '$_base/medal1.svg';
   static const String medal2 = '$_base/medal2.svg';

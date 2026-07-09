@@ -9,7 +9,7 @@ import '../models/icon_type.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
-import 'twemoji_icon.dart';
+import 'openmoji_icon.dart';
 
 final _currency = NumberFormat.currency(
   locale: 'id_ID',
@@ -50,7 +50,7 @@ class TopSpendingRow extends StatelessWidget {
           SizedBox(
             width: 28,
             child: rank <= 3
-                ? TwemojiIcon(_medals[rank - 1], size: 26)
+                ? OpenMojiIcon(_medals[rank - 1], size: 22)
                 : Text(
                     '$rank.',
                     style: AppTheme.heading(
@@ -60,7 +60,7 @@ class TopSpendingRow extends StatelessWidget {
                   ),
           ),
           const SizedBox(width: 8),
-          if (iconAsset != null) TwemojiIcon(iconAsset, size: 26),
+          if (iconAsset != null) OpenMojiIcon(iconAsset, size: 31),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

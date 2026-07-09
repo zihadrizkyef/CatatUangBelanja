@@ -8,7 +8,7 @@ import '../models/transaction.dart';
 import '../models/wallet.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
-import 'twemoji_icon.dart';
+import 'openmoji_icon.dart';
 import '../theme/app_theme.dart';
 
 final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
@@ -48,22 +48,14 @@ class HomeTransactionRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SizedBox(
+          Container(
             width: 46,
             height: 46,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-                ),
-                iconAsset != null
-                    ? TwemojiIcon(iconAsset, size: 45)
-                    : Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, size: 36, color: palette.textPrimary),
-              ],
-            ),
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: iconAsset != null
+                ? OpenMojiIcon(iconAsset, size: 26)
+                : Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, size: 24, color: palette.textPrimary),
           ),
           const SizedBox(width: 12),
           Expanded(

@@ -71,14 +71,12 @@ class BudgetView extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
                   children: [
                     if (budgetStatuses.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 40),
-                        child: EmptyState(
-                          palette: palette,
-                          icon: AppIcons.budgetSeedling,
-                          iconSize: 50,
-                          title: 'Belum ada anggaran. Yuk buat yang pertama, Bun!',
-                        ),
+                      EmptyState(
+                        palette: palette,
+                        icon: AppIcons.budgetSeedling,
+                        iconSize: 48,
+                        bordered: false,
+                        title: 'Belum ada anggaran. Yuk buat yang pertama, Bun!',
                       )
                     else
                       for (final status in budgetStatuses)

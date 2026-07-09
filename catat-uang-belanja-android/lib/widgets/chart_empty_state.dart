@@ -11,24 +11,17 @@ class ChartEmptyState extends StatelessWidget {
   const ChartEmptyState({
     super.key,
     required this.palette,
+    this.icon = AppIcons.summary,
     this.message = 'Belum ada data untuk periode ini, Bun.',
   });
 
   final AppPalette palette;
+  final String icon;
   final String message;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 28),
-      decoration: BoxDecoration(
-        color: palette.cardBg,
-        border: Border.all(color: palette.border),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: EmptyState(palette: palette, icon: AppIcons.summary, iconSize: 52, title: message),
-    );
+    return EmptyState(palette: palette, icon: icon, iconSize: 42, title: message);
   }
 }
 

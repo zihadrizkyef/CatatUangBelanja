@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
-import '../widgets/twemoji_icon.dart';
+import '../widgets/openmoji_icon.dart';
 import '../theme/app_theme.dart';
 
 class NavItem {
@@ -42,41 +43,41 @@ class AppShellView extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
 
-    return Scaffold(
-      body: IndexedStack(index: currentIndex, children: screens),
-      floatingActionButton: showFab
-          ? FloatingActionButton(
-              onPressed: onTapFab,
-              tooltip: 'Catat transaksi',
-              backgroundColor: AppColors.accent,
-              child: const Text(
-                '+',
-                style: TextStyle(fontSize: 26, color: Colors.white),
-              ),
-            )
-          : null,
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          color: palette.navBg,
-          border: Border(top: BorderSide(color: palette.border)),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              children: [
-                for (var i = 0; i < navItems.length; i++)
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => onTapNav(i),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: AppTheme.navigationBarOverlay(palette),
+      child: Scaffold(
+        body: IndexedStack(index: currentIndex, children: screens),
+        floatingActionButton: showFab
+            ? FloatingActionButton(
+                onPressed: onTapFab,
+                tooltip: 'Catat transaksi',
+                backgroundColor: AppColors.accent,
+                child: const Text(
+                  '+',
+                  style: TextStyle(fontSize: 26, color: Colors.white),
+                ),
+              )
+            : null,
+        bottomNavigationBar: DecoratedBox(
+          decoration: BoxDecoration(
+            color: palette.navBg,
+            border: Border(top: BorderSide(color: palette.border)),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 10),
+              child: Row(
+                children: [
+                  for (var i = 0; i < navItems.length; i++)
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => onTapNav(i),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Opacity(
                               opacity: currentIndex == i ? 1 : 0.45,
-                              child: TwemojiIcon(navItems[i].icon, size: 32),
+                              child: OpenMojiIcon(navItems[i].icon, size: 27),
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -93,8 +94,8 @@ class AppShellView extends StatelessWidget {
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

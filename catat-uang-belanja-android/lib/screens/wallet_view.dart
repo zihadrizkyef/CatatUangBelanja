@@ -82,13 +82,11 @@ class WalletView extends StatelessWidget {
                     Text('Dompet Saya', style: AppTheme.heading(fontSize: 13, color: palette.textPrimary)),
                     const SizedBox(height: 10),
                     if (wallets.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        child: EmptyState(
-                          palette: palette,
-                          icon: AppIcons.wallet,
-                          title: 'Belum ada dompet, Bun. Yuk tambah yang pertama.',
-                        ),
+                      EmptyState(
+                        palette: palette,
+                        icon: AppIcons.wallet,
+                        iconSize: 42,
+                        title: 'Belum ada dompet, Bun. Yuk tambah yang pertama.',
                       )
                     else
                       for (var i = 0; i < wallets.length; i++)
@@ -132,6 +130,8 @@ class WalletView extends StatelessWidget {
                       EmptyState(
                         palette: palette,
                         icon: AppIcons.emptyReceipt,
+                        iconSize: 45,
+                        bordered: false,
                         title: 'Belum ada transaksi di dompet ini, Bun.',
                       )
                     else

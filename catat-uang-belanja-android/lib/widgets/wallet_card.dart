@@ -6,7 +6,7 @@ import '../models/icon_type.dart';
 import '../models/wallet.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
-import 'twemoji_icon.dart';
+import 'openmoji_icon.dart';
 
 final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
@@ -37,13 +37,13 @@ class WalletCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 58,
-            height: 58,
+            width: 48,
+            height: 48,
             decoration: const BoxDecoration(color: _walletIconBg, shape: BoxShape.circle),
             alignment: Alignment.center,
             child: iconAsset != null
-                ? TwemojiIcon(iconAsset, size: 30)
-                : Icon(Icons.account_balance_wallet_rounded, size: 28, color: palette.textPrimary),
+                ? OpenMojiIcon(iconAsset, size: 27)
+                : Icon(Icons.account_balance_wallet_rounded, size: 24, color: palette.textPrimary),
           ),
           const SizedBox(width: 12),
           Expanded(

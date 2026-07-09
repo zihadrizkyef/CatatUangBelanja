@@ -9,7 +9,7 @@ import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../widgets/category_chip.dart';
 import '../widgets/numeric_keypad.dart';
-import '../widgets/twemoji_icon.dart';
+import '../widgets/openmoji_icon.dart';
 
 /// Pure layout for [BudgetSheet]'s add/edit bottom sheet: category grid (add
 /// mode) or a fixed category display (edit mode), plus the amount keypad and
@@ -99,7 +99,7 @@ class BudgetSheetView extends StatelessWidget {
                 child: Row(
                   children: [
                     if (AppIcons.byIconValue[selectedCategory!.iconValue] != null)
-                      TwemojiIcon(AppIcons.byIconValue[selectedCategory!.iconValue]!, size: 32),
+                      OpenMojiIcon(AppIcons.byIconValue[selectedCategory!.iconValue]!, size: 36),
                     const SizedBox(width: 10),
                     Text(
                       selectedCategory!.name,

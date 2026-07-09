@@ -9,7 +9,7 @@ import '../models/icon_type.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
-import 'twemoji_icon.dart';
+import 'openmoji_icon.dart';
 
 final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
@@ -48,7 +48,7 @@ class BudgetRow extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  if (iconAsset != null) TwemojiIcon(iconAsset, size: 30),
+                  if (iconAsset != null) OpenMojiIcon(iconAsset, size: 34),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
