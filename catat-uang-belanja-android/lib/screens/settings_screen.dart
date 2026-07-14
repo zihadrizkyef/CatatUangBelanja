@@ -5,14 +5,15 @@ import '../repositories/finance_repository.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import 'budget_screen.dart';
+import 'category_screen.dart';
 import 'settings_view.dart';
 
 /// Pengaturan tab container: profile card, dark-mode toggle wired to
-/// [FinanceRepository.toggleDarkMode], and grouped settings. Only "Kategori
-/// & Anggaran" and "Tentang Aplikasi" are live — the rest are "Segera hadir"
-/// stubs, matching the mockup's scope exactly. Reads [FinanceRepository] and
-/// wires up [Navigator]/dialog/toast actions; hands the rest to
-/// [SettingsView].
+/// [FinanceRepository.toggleDarkMode], and grouped settings. Only "Kelola
+/// Kategori", "Anggaran", and "Tentang Aplikasi" are live — the rest are
+/// "Segera hadir" stubs, matching the mockup's scope exactly. Reads
+/// [FinanceRepository] and wires up [Navigator]/dialog/toast actions; hands
+/// the rest to [SettingsView].
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -21,6 +22,10 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  void _openCategoryScreen() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CategoryScreen()));
+  }
+
   void _openBudgetScreen() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen()));
   }
@@ -122,7 +127,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ]),
         SettingGroup('Preferensi', [
           SettingItem(AppIcons.notification, 'Notifikasi', _showComingSoon),
-          SettingItem(AppIcons.categoryBudgetSetting, 'Kategori & Anggaran', _openBudgetScreen),
+          SettingItem(AppIcons.categoryBudgetSetting, 'Kelola Kategori', _openCategoryScreen),
+          SettingItem(AppIcons.budgetTarget, 'Anggaran', _openBudgetScreen),
           SettingItem(AppIcons.language, 'Bahasa', _showComingSoon),
         ]),
         SettingGroup('Lainnya', [

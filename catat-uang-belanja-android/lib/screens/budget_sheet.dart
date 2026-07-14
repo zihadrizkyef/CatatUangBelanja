@@ -48,6 +48,12 @@ class _BudgetSheetState extends State<BudgetSheet> {
         case BudgetPeriod.event:
           _eventCategoryId = existing.triggerCategoryId;
       }
+    } else {
+      final repository = context.read<FinanceRepository>();
+      final budgetedIds = repository.budgets.map((b) => b.categoryId).toSet();
+      final categoryOptions = repository.categories
+          .where((c) => c.type == models.CategoryType.expense && !budgetedIds.contains(c.id));
+      _category = categoryOptions.firstOrNull;
     }
   }
 

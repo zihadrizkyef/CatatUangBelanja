@@ -110,6 +110,25 @@ class FinanceRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateCategory(Category category) async {
+    final db = await _appDatabase.database;
+    await db.update('categories', category.toMap(), where: 'id = ?', whereArgs: [category.id]);
+    _categories = [for (final c in _categories) if (c.id == category.id) category else c];
+    notifyListeners();
+  }
+
+  /// Hard delete, mirroring [deleteBudget] — categories have no soft-delete
+  /// column. Callers should keep a category from being deleted while a
+  /// budget still references it (Kelola Kategori's delete flow checks
+  /// [budgets] first) since [budgetStatuses] silently drops budgets whose
+  /// category id no longer resolves.
+  Future<void> deleteCategory(String categoryId) async {
+    final db = await _appDatabase.database;
+    await db.delete('categories', where: 'id = ?', whereArgs: [categoryId]);
+    _categories = _categories.where((c) => c.id != categoryId).toList();
+    notifyListeners();
+  }
+
   Future<void> addTransaction(Transaction transaction) async {
     final db = await _appDatabase.database;
     await db.insert('transactions', transaction.toMap());

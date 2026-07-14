@@ -61,4 +61,26 @@ class AppIcons {
     'wallet_bank': '$_base/bank.svg',
     'wallet_ewallet': '$_base/mobile_phone.svg',
   };
+
+  /// Icon (and matching pastel color, mirroring `AppDatabase._seed`) choices
+  /// offered by Kelola Kategori's icon picker — the same bundled set already
+  /// used by the seeded categories, so a user-created category picking one
+  /// of these renders identically to a system category with that icon.
+  static const Map<String, String> categoryIconColors = {
+    'category_kitchen': '#FBD8B5',
+    'category_kids_snack': '#F7C6D9',
+    'category_school': '#DCD3F0',
+    'category_arisan': '#C4EBD9',
+    'category_bills': '#FDF3E3',
+    'category_health': '#F7C6D9',
+    'category_transport': '#FBD8B5',
+    'category_entertainment': '#DCD3F0',
+    'category_salary': '#C4EBD9',
+    'category_allowance': '#F7C6D9',
+    'category_side_business': '#FBD8B5',
+    'category_bonus': '#DCD3F0',
+    'category_other': '#FDF3E3',
+  };
+
+  static List<String> get categoryIconChoices => categoryIconColors.keys.toList();
 }

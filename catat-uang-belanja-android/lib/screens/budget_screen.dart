@@ -8,8 +8,8 @@ import 'budget_view.dart';
 
 /// Full-screen budget CRUD container (was AnggaranScreen in the mockup) —
 /// pushed via [Navigator] from the "Kelola" links on Beranda/Rangkuman and
-/// Pengaturan's "Kategori & Anggaran" row. Reads [FinanceRepository] and
-/// wires up the add/edit [BudgetSheet]; hands the rest to [BudgetView].
+/// Pengaturan's "Anggaran" row. Reads [FinanceRepository] and wires up the
+/// add/edit [BudgetSheet]; hands the rest to [BudgetView].
 class BudgetScreen extends StatefulWidget {
   const BudgetScreen({super.key});
 
