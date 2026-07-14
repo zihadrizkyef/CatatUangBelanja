@@ -9,9 +9,10 @@ import '../repositories/finance_repository.dart';
 import 'budget_sheet_view.dart';
 
 /// Add/edit bottom sheet container: category grid (add mode only — the
-/// category is fixed once a budget exists) + numeric keypad for the monthly
-/// limit. Reads/writes [FinanceRepository] and wires the sheet's [Navigator]
-/// dismissal; hands the rest to [BudgetSheetView].
+/// category is fixed once a budget exists), the reset-period picker
+/// (Bulanan/Mingguan/Event and its anchor), and the numeric keypad for the
+/// per-period limit. Reads/writes [FinanceRepository] and wires up the
+/// sheet's [Navigator] dismissal; hands the rest to [BudgetSheetView].
 class BudgetSheet extends StatefulWidget {
   const BudgetSheet({super.key, this.existing});
 
@@ -24,15 +25,29 @@ class BudgetSheet extends StatefulWidget {
 class _BudgetSheetState extends State<BudgetSheet> {
   models.Category? _category;
   String _amountStr = '';
+  BudgetPeriod _period = BudgetPeriod.monthly;
+  int _monthDay = 1;
+  int _weekday = DateTime.monday;
+  String? _eventCategoryId;
 
   bool get _isEdit => widget.existing != null;
 
   @override
   void initState() {
     super.initState();
-    if (widget.existing != null) {
+    final existing = widget.existing?.budget;
+    if (existing != null) {
       _category = widget.existing!.category;
-      _amountStr = widget.existing!.budget.limitAmount.toString();
+      _amountStr = existing.limitAmount.toString();
+      _period = existing.period;
+      switch (existing.period) {
+        case BudgetPeriod.monthly:
+          _monthDay = existing.resetAnchor ?? 1;
+        case BudgetPeriod.weekly:
+          _weekday = existing.resetAnchor ?? DateTime.monday;
+        case BudgetPeriod.event:
+          _eventCategoryId = existing.triggerCategoryId;
+      }
     }
   }
 
@@ -53,11 +68,30 @@ class _BudgetSheetState extends State<BudgetSheet> {
   Future<void> _save() async {
     final amount = int.tryParse(_amountStr);
     if (amount == null || amount <= 0 || _category == null) return;
+    if (_period == BudgetPeriod.event && _eventCategoryId == null) return;
+
     final repository = context.read<FinanceRepository>();
     final now = DateTime.now();
-    final budget = _isEdit
-        ? widget.existing!.budget.copyWith(limitAmount: amount, updatedAt: now)
-        : Budget(id: const Uuid().v4(), categoryId: _category!.id, limitAmount: amount, createdAt: now, updatedAt: now);
+    final resetAnchor = switch (_period) {
+      BudgetPeriod.monthly => _monthDay,
+      BudgetPeriod.weekly => _weekday,
+      BudgetPeriod.event => null,
+    };
+    final triggerCategoryId = _period == BudgetPeriod.event ? _eventCategoryId : null;
+
+    final budget = Budget(
+      id: _isEdit ? widget.existing!.budget.id : const Uuid().v4(),
+      categoryId: _category!.id,
+      period: _period,
+      resetAnchor: resetAnchor,
+      triggerCategoryId: triggerCategoryId,
+      limitAmount: amount,
+      currentPeriodStartedAt: _isEdit
+          ? widget.existing!.budget.currentPeriodStartedAt
+          : repository.periodStartFor(period: _period, resetAnchor: resetAnchor, now: now),
+      createdAt: _isEdit ? widget.existing!.budget.createdAt : now,
+      updatedAt: now,
+    );
     await repository.setBudget(budget);
     if (mounted) Navigator.of(context).pop();
   }
@@ -68,22 +102,46 @@ class _BudgetSheetState extends State<BudgetSheet> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  Future<void> _resetNow() async {
+    if (widget.existing == null) return;
+    await context.read<FinanceRepository>().resetBudgetNow(widget.existing!.budget.id);
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  void _goCreateCategory() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Segera hadir ✨'), duration: Duration(milliseconds: 1200)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final repository = context.watch<FinanceRepository>();
     final budgetedIds = repository.budgets.map((b) => b.categoryId).toSet();
-    final categoryOptions = repository.categories
-        .where((c) => c.type == models.CategoryType.expense && !budgetedIds.contains(c.id))
-        .toList();
+    final expenseCategories = repository.categories.where((c) => c.type == models.CategoryType.expense);
+    final categoryOptions = expenseCategories.where((c) => !budgetedIds.contains(c.id)).toList();
+    final eventCategoryOptions = repository.categories.where((c) => c.type == models.CategoryType.income).toList();
 
     return BudgetSheetView(
       isEdit: _isEdit,
       categoryOptions: categoryOptions,
+      hasExpenseCategories: expenseCategories.isNotEmpty,
       selectedCategory: _category,
+      period: _period,
+      monthDay: _monthDay,
+      weekday: _weekday,
+      eventCategoryOptions: eventCategoryOptions,
+      selectedEventCategoryId: _eventCategoryId,
       amountStr: _amountStr,
       onSelectCategory: (cat) => setState(() => _category = cat),
+      onCreateCategory: _goCreateCategory,
+      onSelectPeriod: (period) => setState(() => _period = period),
+      onSelectMonthDay: (day) => setState(() => _monthDay = day),
+      onSelectWeekday: (weekday) => setState(() => _weekday = weekday),
+      onSelectEventCategory: (cat) => setState(() => _eventCategoryId = cat.id),
       onKeyTap: _pressKey,
       onClose: () => Navigator.of(context).pop(),
+      onReset: _isEdit ? _resetNow : null,
       onDelete: _isEdit ? _delete : null,
     );
   }

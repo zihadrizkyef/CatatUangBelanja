@@ -135,9 +135,10 @@ void main() {
     expect(repository.balanceOf(cashWalletId), 0);
   });
 
-  test('budgetUsageThisMonth sums only this month\'s expense transactions for the category', () async {
+  test('budgetUsage sums only expense transactions since the period start', () async {
     final now = DateTime.now();
     final lastMonth = DateTime(now.year, now.month - 1, 15);
+    final periodStart = DateTime(now.year, now.month, 1);
 
     await repository.addTransaction(Transaction(
       id: 'tx-this-month',
@@ -160,15 +161,105 @@ void main() {
       updatedAt: lastMonth,
     ));
 
-    expect(repository.budgetUsageThisMonth(kitchenCategoryId), 300000);
-
-    await repository.setBudget(Budget(
+    final budget = Budget(
       id: 'budget-kitchen',
       categoryId: kitchenCategoryId,
       limitAmount: 1000000,
+      currentPeriodStartedAt: periodStart,
+      createdAt: now,
+      updatedAt: now,
+    );
+    expect(repository.budgetUsage(budget), 300000);
+
+    await repository.setBudget(budget);
+    expect(repository.budgets.length, 1);
+  });
+
+  test('resetBudgetNow starts a fresh period, dropping prior usage', () async {
+    final now = DateTime.now();
+    final periodStart = DateTime(now.year, now.month, 1);
+
+    await repository.addTransaction(Transaction(
+      id: 'tx-before-reset',
+      type: TransactionType.expense,
+      amount: 400000,
+      walletId: cashWalletId,
+      categoryId: kitchenCategoryId,
+      dateTime: now,
       createdAt: now,
       updatedAt: now,
     ));
-    expect(repository.budgets.length, 1);
+
+    var budget = Budget(
+      id: 'budget-kitchen',
+      categoryId: kitchenCategoryId,
+      limitAmount: 1000000,
+      currentPeriodStartedAt: periodStart,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await repository.setBudget(budget);
+    expect(repository.budgetUsage(repository.budgets.single), 400000);
+
+    await repository.resetBudgetNow('budget-kitchen');
+    budget = repository.budgets.single;
+    expect(repository.budgetUsage(budget), 0);
+    expect(budget.currentPeriodStartedAt.isAfter(now) || budget.currentPeriodStartedAt == now, isTrue);
+  });
+
+  test('an Event budget resets when a matching income transaction is recorded', () async {
+    final now = DateTime.now();
+    final oldPeriodStart = now.subtract(const Duration(days: 10));
+    final salaryCategoryId = repository.categories.firstWhere((c) => c.name == 'Gaji').id;
+
+    await repository.addTransaction(Transaction(
+      id: 'tx-old-expense',
+      type: TransactionType.expense,
+      amount: 200000,
+      walletId: cashWalletId,
+      categoryId: kitchenCategoryId,
+      dateTime: oldPeriodStart.add(const Duration(hours: 1)),
+      createdAt: now,
+      updatedAt: now,
+    ));
+
+    final budget = Budget(
+      id: 'budget-kitchen-event',
+      categoryId: kitchenCategoryId,
+      period: BudgetPeriod.event,
+      triggerCategoryId: salaryCategoryId,
+      limitAmount: 1000000,
+      currentPeriodStartedAt: oldPeriodStart,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await repository.setBudget(budget);
+    expect(repository.budgetUsage(repository.budgets.single), 200000);
+
+    await repository.addTransaction(Transaction(
+      id: 'tx-salary',
+      type: TransactionType.income,
+      amount: 5000000,
+      walletId: cashWalletId,
+      categoryId: salaryCategoryId,
+      dateTime: now,
+      createdAt: now,
+      updatedAt: now,
+    ));
+
+    final updated = repository.budgets.single;
+    expect(updated.currentPeriodStartedAt, now);
+    expect(repository.budgetUsage(updated), 0);
+  });
+
+  test('periodStartFor returns the most recent monthly/weekly anchor on or before now', () {
+    final now = DateTime(2026, 7, 15);
+
+    final monthlyStart = repository.periodStartFor(period: BudgetPeriod.monthly, resetAnchor: 20, now: now);
+    expect(monthlyStart, DateTime(2026, 6, 20));
+
+    final weeklyStart = repository.periodStartFor(period: BudgetPeriod.weekly, resetAnchor: DateTime.wednesday, now: now);
+    expect(weeklyStart.weekday, DateTime.wednesday);
+    expect(weeklyStart.isAfter(now), isFalse);
   });
 }

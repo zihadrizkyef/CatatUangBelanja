@@ -1,8 +1,8 @@
 # Draft Aplikasi Pencatatan Keuangan
 
-Dokumen Rancangan Fitur & Struktur — Versi 0.4
+Dokumen Rancangan Fitur & Struktur — Versi 0.5
 Disusun untuk: Zihad
-Tanggal: 4 Juli 2026
+Tanggal: 11 Juli 2026
 
 ## 1. Ringkasan
 
@@ -101,10 +101,16 @@ Fitur untuk memindahkan dana antar dompet tanpa memengaruhi total rangkuman pema
 
 ### 4.4 Anggaran per Kategori (Budget)
 
-- Pengguna dapat mengatur batas anggaran bulanan untuk kategori pengeluaran tertentu, misalnya Belanja Dapur atau Jajan Anak.
+- Pengguna dapat mengatur batas anggaran untuk kategori pengeluaran tertentu, misalnya Belanja Dapur atau Jajan Anak, dengan salah satu dari tiga mode periode: Bulanan (default), Mingguan, atau Berdasarkan Pemasukan (Event).
 - Aplikasi menampilkan progres pemakaian terhadap batas anggaran (contoh: "Rp650rb terpakai dari Rp1.000.000").
 - Pesan ramah dan suportif muncul saat anggaran mendekati atau melewati batas (bukan nada menegur), sejalan dengan prinsip desain di 2.2/2.6.
 - Anggaran bersifat opsional per kategori; kategori tanpa anggaran tidak menampilkan progres.
+- **Mekanisme reset — tiga mode:**
+  - **Bulanan/Mingguan**: reset mengikuti kalender tetap (tanggal 1 untuk Bulanan, atau hari tertentu yang dipilih pengguna untuk Mingguan). Mode Mingguan disediakan untuk keluarga dengan pola penghasilan harian/tidak tetap yang lebih terbantu siklus evaluasi pendek.
+  - **Berdasarkan Pemasukan (Event)**: pengguna menandai satu kategori pemasukan sebagai "pemicu" (misalnya Gaji); begitu ada transaksi baru di kategori itu, periode anggaran otomatis reset. Cocok untuk keluarga dengan satu momen penghasilan besar yang jelas (gajian bulanan tetap); kurang cocok untuk penghasilan harian kecil karena bisa reset terlalu sering — untuk kasus itu tetap disarankan mode Mingguan.
+  - **Reset Manual**: kapan pun, pengguna bisa menekan tombol "Reset Sekarang" pada kategori anggaran untuk langsung mengakhiri periode berjalan dan memulai periode baru dari 0 — berlaku untuk mode apa pun, sebagai jalan pintas kalau reset otomatis belum waktunya tapi pengguna ingin mulai fresh.
+- Begitu periode baru dimulai (otomatis maupun manual), pemakaian (used) kembali ke 0. Versi awal tidak membawa sisa (surplus) atau kelebihan (defisit) dari periode sebelumnya ke periode berikutnya (tanpa rollover), agar mekanismenya sederhana dan mudah dipahami pengguna.
+- Pemasukan (income) tidak pernah langsung mengurangi angka pemakaian anggaran — perannya di mode Event hanya sebagai pemicu kapan periode berganti, bukan sebagai pengurang nominal yang sudah terpakai.
 
 ### 4.5 Transaksi Berulang (Recurring)
 
@@ -215,10 +221,15 @@ Catatan: saldo dompet (balance) sengaja tidak disimpan sebagai field. Nilainya s
 |---|---|---|
 | id | string/UUID | Unique budget identifier |
 | category_id | ref | Category this budget applies to |
-| period | enum | Monthly (only period supported in the initial version) |
+| period | enum | Monthly, Weekly, or Event (reset triggered by a designated income category) |
+| reset_anchor | integer | Day-of-month (1-31) or day-of-week the period resets on; used only when period = Monthly/Weekly |
+| trigger_category_id | ref | Income category whose transactions trigger a reset; used only when period = Event |
+| current_period_started_at | datetime | Timestamp marking the start of the currently active period. Advances automatically on calendar reset (Monthly/Weekly) or when a transaction hits trigger_category_id (Event), and can also be set to "now" manually via the reset button |
 | limit_amount | integer | Budget limit for the period, in whole Rupiah |
 | created_at | datetime | Creation timestamp |
 | updated_at | datetime | Last edit timestamp |
+
+Catatan: pemakaian (used) tidak disimpan sebagai field — dihitung ulang setiap kali dibutuhkan dengan menjumlahkan transaksi Expense pada category_id terkait yang date_time-nya berada di antara current_period_started_at dan sekarang. Menekan tombol reset manual, mencapai tanggal/hari reset kalender, atau tercatatnya transaksi di trigger_category_id — ketiganya bekerja dengan cara yang sama: memperbarui current_period_started_at ke waktu saat itu, sehingga used otomatis kembali ke 0 tanpa perlu menghapus/mengubah transaksi historis. Versi awal tidak mendukung rollover sisa/defisit antar periode.
 
 ### 5.5 Entity: RecurringTransaction
 
@@ -276,9 +287,11 @@ Catatan: mata uang tidak menjadi bagian dari pengaturan karena aplikasi selalu m
 ### 6.4 Alur Atur Anggaran Kategori
 
 1. Pengguna membuka menu Anggaran dari Rangkuman atau Pengaturan.
-2. Memilih kategori pengeluaran dan mengisi batas anggaran bulanan.
+2. Memilih kategori pengeluaran, mengisi batas anggaran, serta memilih mode reset: Bulanan/Mingguan (dengan tanggal/hari reset-nya), atau Berdasarkan Pemasukan (dengan memilih kategori pemasukan pemicunya, misalnya Gaji).
 3. Aplikasi menampilkan progres pemakaian anggaran secara berkala di Beranda dan Rangkuman.
 4. Pengguna menerima pesan ramah saat anggaran mendekati atau melewati batas.
+5. Periode berjalan berakhir otomatis sesuai mode yang dipilih (tanggal/hari reset kalender, atau begitu transaksi pemasukan pemicu tercatat); progres kembali ke 0 tanpa perlu aksi manual.
+6. Pengguna juga dapat menekan tombol "Reset Sekarang" pada kategori anggaran kapan saja untuk mengakhiri periode berjalan lebih awal dan mulai periode baru dari 0, terlepas dari mode reset yang dipilih.
 
 ### 6.5 Alur Backup & Restore
 
@@ -331,7 +344,7 @@ Catatan: mata uang tidak menjadi bagian dari pengaturan karena aplikasi selalu m
 - Pilihan tema: Light / Dark / Mengikuti Sistem, dan pilihan background/wallpaper Beranda.
 - Kunci aplikasi (aktifkan/nonaktifkan PIN atau biometric).
 - Menu Backup & Restore.
-- Pengaturan kategori dan anggaran, termasuk pemilihan ikon (sistem/emoji/foto).
+- Pengaturan kategori dan anggaran, termasuk pemilihan ikon (sistem/emoji/foto), mode reset periode (Bulanan/Mingguan/Event), dan tombol reset manual per kategori anggaran.
 - Pengaturan transaksi berulang (recurring).
 - Info akun (nomor HP) dan status login untuk sinkronisasi antar perangkat.
 
@@ -353,6 +366,7 @@ Catatan: mata uang tidak menjadi bagian dari pengaturan karena aplikasi selalu m
 - Login menggunakan nomor HP dan kode OTP; belum menyediakan login via email/password atau akun pihak ketiga (Google/Facebook) pada versi awal.
 - Aplikasi tidak mencakup fitur investasi, utang-piutang, atau perencanaan keuangan lanjutan (financial planning); fokus versi ini adalah pencatatan, anggaran sederhana, dan rangkuman transaksi harian.
 - Backup manual mengandalkan akun Google Drive pengguna; penyediaan penyimpanan cloud sendiri di luar itu berada di luar cakupan versi ini.
+- Anggaran mendukung tiga mode reset (kalender Bulanan/Mingguan, berbasis kategori pemasukan pemicu/Event, dan manual lewat tombol), tapi versi awal belum mendukung rollover sisa/defisit anggaran ke periode berikutnya — dapat dipertimbangkan pada pengembangan lanjutan.
 
 ## 10. Tahapan Pengembangan yang Disarankan
 

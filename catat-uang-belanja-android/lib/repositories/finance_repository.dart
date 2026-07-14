@@ -85,6 +85,7 @@ class FinanceRepository extends ChangeNotifier {
       _themeMode = ThemeMode.values.byName(themeModeRow.first['value'] as String);
     }
 
+    await _syncBudgetPeriods();
     notifyListeners();
   }
 
@@ -113,6 +114,7 @@ class FinanceRepository extends ChangeNotifier {
     final db = await _appDatabase.database;
     await db.insert('transactions', transaction.toMap());
     _transactions = [..._transactions, transaction];
+    await _syncBudgetPeriods(newTransaction: transaction);
     notifyListeners();
   }
 
@@ -160,6 +162,93 @@ class FinanceRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The timestamp a budget's period should start from, for the given
+  /// [period]/[resetAnchor] as of [now] (defaults to [DateTime.now]) — the
+  /// most recent monthly/weekly anchor occurrence, or `now` itself for Event
+  /// (there's no calendar anchor to fall back to before the first trigger).
+  /// Used both to seed a freshly-created budget's initial period and by
+  /// [_syncBudgetPeriods] to detect when an existing budget has crossed into
+  /// a new period.
+  DateTime periodStartFor({required BudgetPeriod period, int? resetAnchor, DateTime? now}) {
+    final effectiveNow = now ?? DateTime.now();
+    switch (period) {
+      case BudgetPeriod.monthly:
+        return _mostRecentMonthlyAnchor(resetAnchor ?? 1, effectiveNow);
+      case BudgetPeriod.weekly:
+        return _mostRecentWeeklyAnchor(resetAnchor ?? DateTime.monday, effectiveNow);
+      case BudgetPeriod.event:
+        return effectiveNow;
+    }
+  }
+
+  DateTime _mostRecentMonthlyAnchor(int anchorDay, DateTime now) {
+    final daysInThisMonth = DateTime(now.year, now.month + 1, 0).day;
+    final thisMonthAnchor = DateTime(now.year, now.month, anchorDay.clamp(1, daysInThisMonth));
+    if (!thisMonthAnchor.isAfter(now)) return thisMonthAnchor;
+    final prevMonth = DateTime(now.year, now.month - 1, 1);
+    final daysInPrevMonth = DateTime(prevMonth.year, prevMonth.month + 1, 0).day;
+    return DateTime(prevMonth.year, prevMonth.month, anchorDay.clamp(1, daysInPrevMonth));
+  }
+
+  DateTime _mostRecentWeeklyAnchor(int weekday, DateTime now) {
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final diff = (todayStart.weekday - weekday) % 7;
+    return todayStart.subtract(Duration(days: diff));
+  }
+
+  /// Advances any budget whose period has rolled over — monthly/weekly
+  /// budgets are checked against the calendar every time this runs (called
+  /// from [load] and after [addTransaction]); Event budgets only advance
+  /// when [newTransaction] is a matching income transaction for their
+  /// [Budget.triggerCategoryId] (doc 4.4). Mirrors [setBudget]'s
+  /// upsert-then-notify shape but batches every changed row into one write.
+  Future<void> _syncBudgetPeriods({Transaction? newTransaction}) async {
+    final now = DateTime.now();
+    final updates = <Budget>[];
+    for (final budget in _budgets) {
+      DateTime? newStart;
+      if (budget.period == BudgetPeriod.event) {
+        if (newTransaction != null &&
+            !newTransaction.isDeleted &&
+            newTransaction.type == TransactionType.income &&
+            newTransaction.categoryId == budget.triggerCategoryId) {
+          newStart = newTransaction.dateTime;
+        }
+      } else {
+        final anchor = periodStartFor(period: budget.period, resetAnchor: budget.resetAnchor, now: now);
+        if (anchor.isAfter(budget.currentPeriodStartedAt)) newStart = anchor;
+      }
+      if (newStart != null) {
+        updates.add(budget.copyWith(currentPeriodStartedAt: newStart, updatedAt: now));
+      }
+    }
+    if (updates.isEmpty) return;
+
+    final db = await _appDatabase.database;
+    final batch = db.batch();
+    for (final budget in updates) {
+      batch.update('budgets', budget.toMap(), where: 'id = ?', whereArgs: [budget.id]);
+    }
+    await batch.commit(noResult: true);
+
+    final updatesById = {for (final budget in updates) budget.id: budget};
+    _budgets = [for (final budget in _budgets) updatesById[budget.id] ?? budget];
+  }
+
+  /// Ends the current period early and starts a new one from now (doc 4.4's
+  /// manual reset), regardless of [Budget.period] — usage recomputes to 0
+  /// since no transactions can predate `now`.
+  Future<void> resetBudgetNow(String budgetId) async {
+    final now = DateTime.now();
+    final existing = _budgets.firstWhere((b) => b.id == budgetId);
+    final updated = existing.copyWith(currentPeriodStartedAt: now, updatedAt: now);
+
+    final db = await _appDatabase.database;
+    await db.update('budgets', updated.toMap(), where: 'id = ?', whereArgs: [budgetId]);
+    _budgets = [for (final b in _budgets) if (b.id == budgetId) updated else b];
+    notifyListeners();
+  }
+
   /// Wallet balance, derived on the fly from active transactions (doc 4.2) —
   /// never stored. Transfers apply to both the source and target wallet.
   int balanceOf(String walletId) {
@@ -180,16 +269,14 @@ class FinanceRepository extends ChangeNotifier {
 
   int get totalBalance => _wallets.fold(0, (sum, w) => sum + balanceOf(w.id));
 
-  /// Amount spent against [categoryId] in the current calendar month,
-  /// computed on demand (doc 4.4) rather than tracked as a running total.
-  int budgetUsageThisMonth(String categoryId) {
-    final now = DateTime.now();
+  /// Amount spent against [budget]'s category since [Budget.currentPeriodStartedAt],
+  /// computed on demand (doc 4.4/5.4) rather than tracked as a running total.
+  int budgetUsage(Budget budget) {
     var used = 0;
     for (final t in transactions) {
       if (t.type == TransactionType.expense &&
-          t.categoryId == categoryId &&
-          t.dateTime.year == now.year &&
-          t.dateTime.month == now.month) {
+          t.categoryId == budget.categoryId &&
+          !t.dateTime.isBefore(budget.currentPeriodStartedAt)) {
         used += t.amount;
       }
     }
@@ -261,6 +348,10 @@ class FinanceRepository extends ChangeNotifier {
               id: uuid.v4(),
               categoryId: category.id,
               limitAmount: entry.value,
+              // Default monthly/day-1 period — anchor usage at the start of
+              // this month so the generated transactions below (which are
+              // backdated through the month) actually count toward it.
+              currentPeriodStartedAt: DateTime(now.year, now.month, 1),
               createdAt: now,
               updatedAt: now,
             ),
@@ -393,9 +484,11 @@ class FinanceRepository extends ChangeNotifier {
     for (final budget in _budgets) {
       final category = _categories.where((c) => c.id == budget.categoryId).firstOrNull;
       if (category == null) continue;
-      final used = budgetUsageThisMonth(budget.categoryId);
+      final used = budgetUsage(budget);
       final pct = budget.limitAmount == 0 ? 0 : (used * 100 / budget.limitAmount).round();
-      statuses.add(BudgetStatus(category: category, budget: budget, used: used, pct: pct));
+      final triggerCategory =
+          budget.triggerCategoryId == null ? null : _categories.where((c) => c.id == budget.triggerCategoryId).firstOrNull;
+      statuses.add(BudgetStatus(category: category, budget: budget, used: used, pct: pct, triggerCategory: triggerCategory));
     }
     statuses.sort((a, b) => b.pct.compareTo(a.pct));
     return List.unmodifiable(statuses);

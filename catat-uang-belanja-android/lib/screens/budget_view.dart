@@ -23,12 +23,14 @@ class BudgetView extends StatelessWidget {
     required this.onTapRow,
     required this.onTapAdd,
     required this.onTapBack,
+    required this.onTapReset,
   });
 
   final List<BudgetStatus> budgetStatuses;
   final ValueChanged<BudgetStatus> onTapRow;
   final VoidCallback onTapAdd;
   final VoidCallback onTapBack;
+  final ValueChanged<BudgetStatus> onTapReset;
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +82,12 @@ class BudgetView extends StatelessWidget {
                       )
                     else
                       for (final status in budgetStatuses)
-                        BudgetRow(status: status, palette: palette, onTap: () => onTapRow(status)),
+                        BudgetRow(
+                          status: status,
+                          palette: palette,
+                          onTap: () => onTapRow(status),
+                          onReset: () => onTapReset(status),
+                        ),
                     const SizedBox(height: 14),
                     SizedBox(
                       width: double.infinity,
@@ -139,10 +146,17 @@ Widget previewBudgetView() {
     onTapRow: (_) {},
     onTapAdd: () {},
     onTapBack: () {},
+    onTapReset: (_) {},
   );
 }
 
 @Preview(name: 'BudgetView · kosong')
 Widget previewBudgetViewEmpty() {
-  return BudgetView(budgetStatuses: const [], onTapRow: (_) {}, onTapAdd: () {}, onTapBack: () {});
+  return BudgetView(
+    budgetStatuses: const [],
+    onTapRow: (_) {},
+    onTapAdd: () {},
+    onTapBack: () {},
+    onTapReset: (_) {},
+  );
 }

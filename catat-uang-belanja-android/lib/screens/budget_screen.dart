@@ -36,6 +36,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
       onTapRow: (status) => _openSheet(existing: status),
       onTapAdd: _openSheet,
       onTapBack: () => Navigator.of(context).pop(),
+      onTapReset: (status) => repository.resetBudgetNow(status.budget.id),
     );
   }
 }

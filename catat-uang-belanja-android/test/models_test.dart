@@ -68,7 +68,7 @@ void main() {
     expect(restored.syncStatus, SyncStatus.synced);
   });
 
-  test('Budget round-trips through toMap/fromMap', () {
+  test('Budget round-trips through toMap/fromMap, defaulting to monthly/day-1', () {
     final now = DateTime.utc(2026, 7, 1);
     final budget = Budget(
       id: 'b1',
@@ -82,5 +82,48 @@ void main() {
 
     expect(restored.period, BudgetPeriod.monthly);
     expect(restored.limitAmount, 1000000);
+    expect(restored.resetAnchor, isNull);
+    expect(restored.triggerCategoryId, isNull);
+    expect(restored.currentPeriodStartedAt, now);
+  });
+
+  test('Budget round-trips a weekly period with its reset-day anchor', () {
+    final now = DateTime.utc(2026, 7, 1);
+    final periodStart = DateTime.utc(2026, 6, 29);
+    final budget = Budget(
+      id: 'b2',
+      categoryId: 'c1',
+      period: BudgetPeriod.weekly,
+      resetAnchor: DateTime.monday,
+      limitAmount: 300000,
+      currentPeriodStartedAt: periodStart,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    final restored = Budget.fromMap(budget.toMap());
+
+    expect(restored.period, BudgetPeriod.weekly);
+    expect(restored.resetAnchor, DateTime.monday);
+    expect(restored.currentPeriodStartedAt, periodStart);
+  });
+
+  test('Budget round-trips an event period with its trigger category', () {
+    final now = DateTime.utc(2026, 7, 1);
+    final budget = Budget(
+      id: 'b3',
+      categoryId: 'c1',
+      period: BudgetPeriod.event,
+      triggerCategoryId: 'income-salary',
+      limitAmount: 500000,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    final restored = Budget.fromMap(budget.toMap());
+
+    expect(restored.period, BudgetPeriod.event);
+    expect(restored.triggerCategoryId, 'income-salary');
+    expect(restored.resetAnchor, isNull);
   });
 }

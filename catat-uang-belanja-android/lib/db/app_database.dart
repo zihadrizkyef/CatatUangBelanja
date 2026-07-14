@@ -21,7 +21,7 @@ class AppDatabase {
   static final AppDatabase instance = AppDatabase._();
 
   static const _dbName = 'catat_uang_belanja.db';
-  static const _dbVersion = 2;
+  static const _dbVersion = 3;
 
   Database? _database;
 
@@ -98,10 +98,14 @@ class AppDatabase {
         id TEXT PRIMARY KEY,
         category_id TEXT NOT NULL,
         period TEXT NOT NULL DEFAULT 'monthly',
+        reset_anchor INTEGER,
+        trigger_category_id TEXT,
         limit_amount INTEGER NOT NULL,
+        current_period_started_at TEXT NOT NULL,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
-        FOREIGN KEY (category_id) REFERENCES categories (id)
+        FOREIGN KEY (category_id) REFERENCES categories (id),
+        FOREIGN KEY (trigger_category_id) REFERENCES categories (id)
       )
     ''');
 
@@ -113,6 +117,16 @@ class AppDatabase {
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await _createSettingsTable(db);
+    }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE budgets ADD COLUMN reset_anchor INTEGER');
+      await db.execute('ALTER TABLE budgets ADD COLUMN trigger_category_id TEXT');
+      await db.execute('ALTER TABLE budgets ADD COLUMN current_period_started_at TEXT');
+      // Existing budgets predate periods entirely — treat them as monthly,
+      // resetting on the 1st, with the current period starting this month.
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1).toIso8601String();
+      await db.update('budgets', {'reset_anchor': 1, 'current_period_started_at': startOfMonth});
     }
   }
 
