@@ -103,6 +103,16 @@ class FinanceRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Hard delete, mirroring [deleteCategory]/[deleteBudget] — wallets have no
+  /// soft-delete column. Callers keep at least one wallet around (Dompet's
+  /// delete flow refuses to remove the last one), mirroring the mockup.
+  Future<void> deleteWallet(String walletId) async {
+    final db = await _appDatabase.database;
+    await db.delete('wallets', where: 'id = ?', whereArgs: [walletId]);
+    _wallets = _wallets.where((w) => w.id != walletId).toList();
+    notifyListeners();
+  }
+
   Future<void> addCategory(Category category) async {
     final db = await _appDatabase.database;
     await db.insert('categories', category.toMap());

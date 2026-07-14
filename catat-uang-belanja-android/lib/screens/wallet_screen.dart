@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/wallet.dart';
 import '../repositories/finance_repository.dart';
+import 'wallet_sheet.dart';
 import 'wallet_view.dart';
 
 /// Dompet tab container: reads [FinanceRepository] for the wallet list,
-/// combined balance, and transaction history, and wires up the "+ Tambah
-/// Dompet" stub toast; hands the rest to [WalletView].
+/// combined balance, and transaction history, and wires up the add/edit
+/// [WalletSheet]; hands the rest to [WalletView].
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
 
@@ -25,9 +27,12 @@ class _WalletScreenState extends State<WalletScreen> {
     return '$diff hari lalu';
   }
 
-  void _showComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Segera hadir ✨'), duration: Duration(milliseconds: 1200)),
+  void _openSheet({Wallet? existing}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => WalletSheet(existing: existing),
     );
   }
 
@@ -51,7 +56,8 @@ class _WalletScreenState extends State<WalletScreen> {
             relativeDate: _relativeDate(t.dateTime),
           ),
       ],
-      onTapAddWallet: _showComingSoon,
+      onTapAddWallet: () => _openSheet(),
+      onTapWallet: (wallet) => _openSheet(existing: wallet),
     );
   }
 }

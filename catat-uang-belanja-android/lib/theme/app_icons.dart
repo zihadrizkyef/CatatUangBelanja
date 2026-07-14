@@ -83,4 +83,14 @@ class AppIcons {
   };
 
   static List<String> get categoryIconChoices => categoryIconColors.keys.toList();
+
+  /// Icon (and matching pastel color, mirroring `AppDatabase._seed` /
+  /// `generateDummyData`) choices offered by Dompet's icon picker.
+  static const Map<String, String> walletIconColors = {
+    'wallet_cash': '#F7C6D9',
+    'wallet_bank': '#DCD3F0',
+    'wallet_ewallet': '#C4EBD9',
+  };
+
+  static List<String> get walletIconChoices => walletIconColors.keys.toList();
 }

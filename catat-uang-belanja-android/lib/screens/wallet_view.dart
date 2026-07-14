@@ -33,6 +33,7 @@ class WalletView extends StatelessWidget {
     required this.walletBalances,
     required this.transactions,
     required this.onTapAddWallet,
+    required this.onTapWallet,
   });
 
   final int totalBalance;
@@ -40,6 +41,7 @@ class WalletView extends StatelessWidget {
   final List<int> walletBalances;
   final List<TransactionHistoryRowData> transactions;
   final VoidCallback onTapAddWallet;
+  final ValueChanged<Wallet> onTapWallet;
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +97,7 @@ class WalletView extends StatelessWidget {
                           indexLabel: '${i + 1}/${wallets.length}',
                           balance: walletBalances[i],
                           palette: palette,
+                          onTap: () => onTapWallet(wallets[i]),
                         ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -195,10 +198,18 @@ Widget previewWalletView() {
       ),
     ],
     onTapAddWallet: () {},
+    onTapWallet: (_) {},
   );
 }
 
 @Preview(name: 'WalletView · kosong')
 Widget previewWalletViewEmpty() {
-  return WalletView(totalBalance: 0, wallets: const [], walletBalances: const [], transactions: const [], onTapAddWallet: () {});
+  return WalletView(
+    totalBalance: 0,
+    wallets: const [],
+    walletBalances: const [],
+    transactions: const [],
+    onTapAddWallet: () {},
+    onTapWallet: (_) {},
+  );
 }
