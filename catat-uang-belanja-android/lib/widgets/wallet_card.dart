@@ -20,14 +20,12 @@ class WalletCard extends StatelessWidget {
   const WalletCard({
     super.key,
     required this.wallet,
-    required this.indexLabel,
     required this.balance,
     required this.palette,
     required this.onTap,
   });
 
   final Wallet wallet;
-  final String indexLabel;
   final int balance;
   final AppPalette palette;
   final VoidCallback onTap;
@@ -63,16 +61,7 @@ class WalletCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(wallet.name, style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: palette.textPrimary)),
-                      Text(
-                        'Rekening $indexLabel',
-                        style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: palette.textSecondary),
-                      ),
-                    ],
-                  ),
+                  child: Text(wallet.name, style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: palette.textPrimary)),
                 ),
                 Text(_currency.format(balance), style: AppTheme.heading(fontSize: 15, color: palette.textPrimary)),
                 const SizedBox(width: 6),
@@ -98,7 +87,6 @@ Widget previewWalletCard() {
       iconValue: 'wallet_cash',
       createdAt: DateTime(2026, 1, 1),
     ),
-    indexLabel: '1/2',
     balance: 1250000,
     palette: AppPalette.light,
     onTap: () {},

@@ -94,7 +94,6 @@ class WalletView extends StatelessWidget {
                       for (var i = 0; i < wallets.length; i++)
                         WalletCard(
                           wallet: wallets[i],
-                          indexLabel: '${i + 1}/${wallets.length}',
                           balance: walletBalances[i],
                           palette: palette,
                           onTap: () => onTapWallet(wallets[i]),
