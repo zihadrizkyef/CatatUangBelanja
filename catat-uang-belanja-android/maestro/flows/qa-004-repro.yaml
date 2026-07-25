@@ -1,0 +1,22 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+- launchApp
+- tapOn: "Beranda"
+- tapOn:
+    point: "964,1962"
+- waitForAnimationToEnd
+- tapOn: "Jajan Anak"
+- scroll
+- tapOn: "9"
+- tapOn: "9"
+- tapOn: "9"
+- tapOn: "9"
+- tapOn: "9"
+- tapOn: "9"
+- tapOn: "9"
+- tapOn: "9"
+- tapOn: "9"
+- takeScreenshot: qa-largeamt-01-keypad
+- tapOn: "✓"
+- waitForAnimationToEnd
+- takeScreenshot: qa-largeamt-02-saved

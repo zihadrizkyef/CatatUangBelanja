@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:intl/intl.dart';
 
-import '../models/budget.dart';
-import '../models/budget_status.dart';
 import '../models/category.dart' as models;
 import '../models/icon_type.dart';
 import '../theme/app_colors.dart';
@@ -19,24 +17,28 @@ final _currency = NumberFormat.currency(
 
 /// A single ranked row in Rangkuman's "Pengeluaran Terbesar" list — a medal
 /// for the top 3 [rank]s, otherwise a plain ordinal, plus the category's icon,
-/// name, and amount spent this period.
+/// name, and amount spent this period. [amount] is aggregated directly from
+/// expense transactions (see [SummaryScreen]), independent of whether the
+/// category has a budget set.
 class TopSpendingRow extends StatelessWidget {
   const TopSpendingRow({
     super.key,
     required this.rank,
-    required this.status,
+    required this.category,
+    required this.amount,
     required this.palette,
   });
 
   final int rank;
-  final BudgetStatus status;
+  final models.Category category;
+  final int amount;
   final AppPalette palette;
 
   static const _medals = [AppIcons.medal1, AppIcons.medal2, AppIcons.medal3];
 
   @override
   Widget build(BuildContext context) {
-    final iconAsset = AppIcons.byIconValue[status.category.iconValue];
+    final iconAsset = AppIcons.byIconValue[category.iconValue];
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -60,11 +62,11 @@ class TopSpendingRow extends StatelessWidget {
                   ),
           ),
           const SizedBox(width: 8),
-          if (iconAsset != null) OpenMojiIcon(iconAsset, size: 31),
+          if (iconAsset != null) OpenMojiIcon(iconAsset, size: 46.5),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              status.category.name,
+              category.name,
               style: AppTheme.body(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -73,7 +75,7 @@ class TopSpendingRow extends StatelessWidget {
             ),
           ),
           Text(
-            _currency.format(status.used),
+            _currency.format(amount),
             style: AppTheme.body(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -99,18 +101,8 @@ final _previewCategory = models.Category(
 Widget previewTopSpendingRowMedal() {
   return TopSpendingRow(
     rank: 1,
-    status: BudgetStatus(
-      category: _previewCategory,
-      budget: Budget(
-        id: 'preview-budget',
-        categoryId: 'preview-category',
-        limitAmount: 1000000,
-        createdAt: DateTime(2026, 1, 1),
-        updatedAt: DateTime(2026, 1, 1),
-      ),
-      used: 850000,
-      pct: 85,
-    ),
+    category: _previewCategory,
+    amount: 850000,
     palette: AppPalette.light,
   );
 }
@@ -119,18 +111,8 @@ Widget previewTopSpendingRowMedal() {
 Widget previewTopSpendingRowOrdinal() {
   return TopSpendingRow(
     rank: 4,
-    status: BudgetStatus(
-      category: _previewCategory,
-      budget: Budget(
-        id: 'preview-budget',
-        categoryId: 'preview-category',
-        limitAmount: 1000000,
-        createdAt: DateTime(2026, 1, 1),
-        updatedAt: DateTime(2026, 1, 1),
-      ),
-      used: 250000,
-      pct: 25,
-    ),
+    category: _previewCategory,
+    amount: 250000,
     palette: AppPalette.light,
   );
 }

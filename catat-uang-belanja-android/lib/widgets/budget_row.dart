@@ -52,7 +52,7 @@ class BudgetRow extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      if (iconAsset != null) OpenMojiIcon(iconAsset, size: 34),
+                      if (iconAsset != null) OpenMojiIcon(iconAsset, size: 51),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -71,7 +71,7 @@ class BudgetRow extends StatelessWidget {
                         style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: palette.textSecondary),
                       ),
                       const Spacer(),
-                      Text('${status.pct}%', style: AppTheme.heading(fontSize: 13, color: barColor)),
+                      Text('$clampedPct%', style: AppTheme.heading(fontSize: 13, color: barColor)),
                     ],
                   ),
                   const SizedBox(height: 6),

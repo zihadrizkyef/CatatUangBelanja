@@ -1,0 +1,8 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+- launchApp
+- tapOn: "Dompet"
+- tapOn:
+    point: "819,618"
+- waitForAnimationToEnd
+- takeScreenshot: qa-transfer-01-sheet

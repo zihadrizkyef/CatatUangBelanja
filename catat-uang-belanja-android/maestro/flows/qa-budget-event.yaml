@@ -1,0 +1,23 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+- launchApp
+- tapOn: "Beranda"
+- tapOn:
+    point: "939,685"
+- waitForAnimationToEnd
+- tapOn: "+ Tambah Anggaran"
+- waitForAnimationToEnd
+- tapOn: "Jajan Anak"
+- tapOn: "Event"
+- waitForAnimationToEnd
+- tapOn: "Gaji"
+- scroll
+- tapOn: "5"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "✓"
+- waitForAnimationToEnd
+- takeScreenshot: qa-budgetevent-02-saved

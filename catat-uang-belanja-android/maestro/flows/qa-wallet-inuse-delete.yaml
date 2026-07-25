@@ -1,0 +1,16 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+- launchApp
+- tapOn: "Dompet"
+- tapOn:
+    point: "540,945"
+- waitForAnimationToEnd
+- takeScreenshot: qa-inuse-01-detail
+- tapOn:
+    point: "964,168"
+- waitForAnimationToEnd
+- tapOn: "Hapus Dompet"
+- waitForAnimationToEnd
+- takeScreenshot: qa-inuse-02-after-delete
+- tapOn: "Beranda"
+- takeScreenshot: qa-inuse-03-beranda

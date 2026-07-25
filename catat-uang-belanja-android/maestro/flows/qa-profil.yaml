@@ -1,0 +1,8 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+- launchApp
+- tapOn: "Pengaturan"
+- tapOn:
+    point: "240,1181"
+- waitForAnimationToEnd
+- takeScreenshot: qa-profil-01

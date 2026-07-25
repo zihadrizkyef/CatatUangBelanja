@@ -6,6 +6,8 @@ import '../models/icon_type.dart';
 import '../models/wallet.dart';
 import '../repositories/finance_repository.dart';
 import '../theme/app_icons.dart';
+import '../utils/confirm_delete.dart';
+import '../utils/snackbar.dart';
 import 'wallet_sheet_view.dart';
 
 /// Maps an icon choice to its [WalletType], since the sheet has no separate
@@ -54,7 +56,10 @@ class _WalletSheetState extends State<WalletSheet> {
 
   Future<void> _save() async {
     final name = _nameController.text.trim();
-    if (name.isEmpty) return;
+    if (name.isEmpty) {
+      showSnackBarMessage(context, 'Isi nama dompetnya dulu ya, Bun');
+      return;
+    }
 
     final repository = context.read<FinanceRepository>();
     final color = AppIcons.walletIconColors[_iconValue] ?? '#F3ECE6';
@@ -85,6 +90,21 @@ class _WalletSheetState extends State<WalletSheet> {
       );
       return;
     }
+    if (repository.transactions.any((t) => t.walletId == existing.id || t.targetWalletId == existing.id)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Dompet ini masih punya transaksi. Hapus transaksinya dulu, Bun.'),
+          duration: Duration(milliseconds: 2000),
+        ),
+      );
+      return;
+    }
+    final confirmed = await confirmDelete(
+      context,
+      title: 'Hapus Dompet?',
+      message: 'Dompet "${existing.name}" akan dihapus dan tidak bisa dikembalikan, Bun.',
+    );
+    if (!confirmed || !mounted) return;
     await repository.deleteWallet(existing.id);
     if (mounted) Navigator.of(context).pop();
   }

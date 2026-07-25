@@ -1,0 +1,10 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+- launchApp
+- tapOn: "Beranda"
+- tapOn:
+    point: "939,685"
+- waitForAnimationToEnd
+- tapOn: "+ Tambah Anggaran"
+- waitForAnimationToEnd
+- takeScreenshot: qa-budgetadd-01-sheet

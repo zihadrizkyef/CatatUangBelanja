@@ -1,0 +1,20 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+# Repro for UX-005: the "Mode Gelap" Switch on Pengaturan
+# (settings_view.dart line ~182) has no accessible label — its
+# content-desc is empty in the real Android accessibility tree (verified
+# via `adb shell uiautomator dump`: the Switch node has
+# content-desc=""), even though the sibling Text('Mode Gelap') sits right
+# next to it. A TalkBack user reaches an unlabeled "Switch, off" control
+# with no indication of what it toggles. After running this flow, verify
+# with:
+#   adb shell uiautomator dump /sdcard/dump.xml && adb shell cat /sdcard/dump.xml
+# and inspect the android.widget.Switch node's content-desc attribute.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: ux-005-mode-gelap-switch

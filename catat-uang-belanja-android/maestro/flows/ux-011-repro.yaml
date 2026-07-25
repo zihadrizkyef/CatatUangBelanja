@@ -1,0 +1,45 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+# Repro for UX-011: transferring out of a wallet that doesn't have enough
+# balance is allowed with zero warning, and the resulting negative balance
+# is displayed with the exact same style (plain bold text, no color/icon
+# distinction) as any positive balance, both in Dompet's wallet list and
+# in Wallet Detail's hero header.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Dompet"
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn: "+"
+- waitForAnimationToEnd:
+    timeout: 800
+- tapOn: "Nama dompet"
+- inputText: "Dompet Kosong"
+- tapOn: "Simpan"
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn: "Transfer"
+- waitForAnimationToEnd:
+    timeout: 1000
+# Cycle "Dari" until it lands on the freshly-created empty wallet, then
+# transfer Rp 1.000 out of it — no "saldo tidak cukup" warning appears.
+- tapOn:
+    point: "25%,40%"
+- tapOn:
+    point: "19%,58%"
+- tapOn:
+    point: "43%,58%"
+- tapOn:
+    point: "43%,58%"
+- tapOn:
+    point: "43%,58%"
+- tapOn:
+    point: "81%,83%"
+- waitForAnimationToEnd:
+    timeout: 1000
+- tapOn: "Dompet Kosong"
+- waitForAnimationToEnd:
+    timeout: 1000
+- takeScreenshot: ux-011-negative-balance-no-distinct-styling

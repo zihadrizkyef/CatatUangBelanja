@@ -1,0 +1,5 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+- launchApp
+- tapOn: "Dompet"
+- takeScreenshot: qa-explore-01-wallet-list

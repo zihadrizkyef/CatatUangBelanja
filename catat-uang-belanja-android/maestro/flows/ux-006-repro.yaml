@@ -1,0 +1,37 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+# Repro for UX-006: "Hapus Transaksi" (and the equivalent delete buttons in
+# Wallet/Category/Budget edit sheets) delete immediately on tap with ZERO
+# confirmation dialog and no undo affordance surfaced in the UI.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: "Generate Data Dummy"
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn: "Ya, Isi"
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn: "Beranda"
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: "Lihat semua →"
+- waitForAnimationToEnd:
+    timeout: 1500
+# Tap the first transaction row in "Semua Transaksi" to open Edit Transaksi.
+- tapOn:
+    point: "50%,35%"
+- waitForAnimationToEnd:
+    timeout: 1000
+- takeScreenshot: ux-006-edit-sheet-before-delete
+# Tap "Hapus Transaksi" — note there is no confirmation dialog at all; the
+# transaction is gone and the sheet is closed by the time the next
+# screenshot is taken.
+- tapOn: "Hapus Transaksi"
+- waitForAnimationToEnd:
+    timeout: 1000
+- takeScreenshot: ux-006-after-delete-no-confirm

@@ -1,0 +1,12 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+- launchApp
+- tapOn: "Pengaturan"
+- tapOn: "Generate Data Dummy"
+- waitForAnimationToEnd
+- tapOn: "Ya, Isi"
+- waitForAnimationToEnd
+- takeScreenshot: qa-dummy-02-settings-after
+- tapOn: "Beranda"
+- waitForAnimationToEnd
+- takeScreenshot: qa-dummy-03-home

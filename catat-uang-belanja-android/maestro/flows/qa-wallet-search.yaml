@@ -1,0 +1,11 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+- launchApp
+- tapOn: "Dompet"
+- tapOn:
+    point: "540,748"
+- inputText: "bank"
+- takeScreenshot: qa-walletsearch-01-filtered
+- eraseText: 10
+- inputText: "zzz_no_match"
+- takeScreenshot: qa-walletsearch-02-nomatch

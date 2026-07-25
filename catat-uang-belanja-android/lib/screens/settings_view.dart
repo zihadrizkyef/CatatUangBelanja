@@ -169,23 +169,25 @@ class SettingsView extends StatelessWidget {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-                        child: Row(
-                          children: [
-                            const OpenMojiIcon(AppIcons.darkMode, size: 24),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Mode Gelap',
-                                style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.textPrimary),
+                        child: MergeSemantics(
+                          child: Row(
+                            children: [
+                              const OpenMojiIcon(AppIcons.darkMode, size: 24),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Mode Gelap',
+                                  style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.textPrimary),
+                                ),
                               ),
-                            ),
-                            Switch(
-                              value: isDark,
-                              activeThumbColor: Colors.white,
-                              activeTrackColor: AppColors.accent,
-                              onChanged: onToggleDarkMode,
-                            ),
-                          ],
+                              Switch(
+                                value: isDark,
+                                activeThumbColor: Colors.white,
+                                activeTrackColor: AppColors.accent,
+                                onChanged: onToggleDarkMode,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

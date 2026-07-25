@@ -10,7 +10,13 @@ import 'category_view.dart';
 /// "Kelola Kategori" row. Reads [FinanceRepository] and wires up the
 /// add/edit [CategorySheet]; hands the rest to [CategoryView].
 class CategoryScreen extends StatefulWidget {
-  const CategoryScreen({super.key});
+  const CategoryScreen({super.key, this.autoOpenAdd = false});
+
+  /// When true, opens the "add category" sheet as soon as the screen
+  /// appears — used by Anggaran's "Buat Kategori Dulu"/"Tambah Kategori
+  /// Baru" prompts so the user lands straight in the add flow instead of an
+  /// empty list they'd have to tap "+" on themselves.
+  final bool autoOpenAdd;
 
   @override
   State<CategoryScreen> createState() => _CategoryScreenState();
@@ -18,6 +24,16 @@ class CategoryScreen extends StatefulWidget {
 
 class _CategoryScreenState extends State<CategoryScreen> {
   models.CategoryType _tab = models.CategoryType.expense;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoOpenAdd) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openSheet();
+      });
+    }
+  }
 
   void _openSheet({models.Category? existing}) {
     showModalBottomSheet(

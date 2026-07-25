@@ -22,7 +22,7 @@ class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
 
   List<Widget> get _screens => [
-        HomeScreen(onGoToSummary: () => setState(() => _currentIndex = 2)),
+        const HomeScreen(),
         const WalletScreen(),
         const SummaryScreen(),
         const SettingsScreen(),

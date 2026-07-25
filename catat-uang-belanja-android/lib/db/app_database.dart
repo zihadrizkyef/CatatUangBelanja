@@ -161,20 +161,37 @@ class AppDatabase {
     const uuid = Uuid();
     final now = DateTime.now();
 
-    final cashWallet = Wallet(
-      id: uuid.v4(),
-      name: 'Dompet Tunai',
-      type: WalletType.cash,
-      color: '#F7C6D9',
-      iconType: IconType.system,
-      iconValue: 'wallet_cash',
-      createdAt: now,
-    );
-    await db.insert('wallets', cashWallet.toMap());
+    for (final wallet in _systemWallets(uuid, now)) {
+      await db.insert('wallets', wallet.toMap());
+    }
 
     for (final category in _systemCategories(uuid)) {
       await db.insert('categories', category.toMap());
     }
+  }
+
+  /// Default multi-wallet starter set (doc 4.2 examples) so a new user sees
+  /// more than just cash on first run.
+  List<Wallet> _systemWallets(Uuid uuid, DateTime now) {
+    const wallets = [
+      ('Dompet Tunai', WalletType.cash, 'wallet_cash', '#F7C6D9'),
+      ('Rekening Bank', WalletType.bank, 'wallet_bank', '#DCD3F0'),
+      ('E-Wallet', WalletType.eWallet, 'wallet_ewallet', '#C4EBD9'),
+      ('Tabungan', WalletType.savings, 'wallet_savings', '#FBD8B5'),
+    ];
+
+    return [
+      for (final (name, type, iconValue, color) in wallets)
+        Wallet(
+          id: uuid.v4(),
+          name: name,
+          type: type,
+          color: color,
+          iconType: IconType.system,
+          iconValue: iconValue,
+          createdAt: now,
+        ),
+    ];
   }
 
   /// Household categories per doc 2.7.

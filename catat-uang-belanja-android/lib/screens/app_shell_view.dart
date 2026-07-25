@@ -77,7 +77,7 @@ class AppShellView extends StatelessWidget {
                           children: [
                             Opacity(
                               opacity: currentIndex == i ? 1 : 0.45,
-                              child: OpenMojiIcon(navItems[i].icon, size: 27),
+                              child: OpenMojiIcon(navItems[i].icon, size: 40.5),
                             ),
                             const SizedBox(height: 2),
                             Text(

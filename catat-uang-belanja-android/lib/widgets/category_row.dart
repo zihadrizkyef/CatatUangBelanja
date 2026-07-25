@@ -37,7 +37,7 @@ class CategoryRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
             child: Row(
               children: [
-                if (iconAsset != null) OpenMojiIcon(iconAsset, size: 30),
+                if (iconAsset != null) OpenMojiIcon(iconAsset, size: 45),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(

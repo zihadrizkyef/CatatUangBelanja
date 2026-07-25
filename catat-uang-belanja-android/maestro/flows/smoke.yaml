@@ -1,0 +1,4 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+- launchApp
+- takeScreenshot: smoke-01-launch

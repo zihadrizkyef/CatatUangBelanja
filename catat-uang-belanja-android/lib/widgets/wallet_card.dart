@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../models/icon_type.dart';
 import '../models/wallet.dart';
+import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import 'openmoji_icon.dart';
@@ -14,8 +15,8 @@ final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDi
 /// `#FCE0E1` regardless of light/dark theme).
 const _walletIconBg = Color(0xFFFCE0E1);
 
-/// A single wallet row in Dompet's "Dompet Saya" list. Tapping it opens the
-/// edit sheet.
+/// A single wallet row in Dompet's "Dompet Saya" list. Tapping it opens
+/// that wallet's detail screen (editing happens from there).
 class WalletCard extends StatelessWidget {
   const WalletCard({
     super.key,
@@ -56,14 +57,17 @@ class WalletCard extends StatelessWidget {
                   decoration: const BoxDecoration(color: _walletIconBg, shape: BoxShape.circle),
                   alignment: Alignment.center,
                   child: iconAsset != null
-                      ? OpenMojiIcon(iconAsset, size: 27)
+                      ? OpenMojiIcon(iconAsset, size: 40.5)
                       : Icon(Icons.account_balance_wallet_rounded, size: 24, color: palette.textPrimary),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(wallet.name, style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: palette.textPrimary)),
                 ),
-                Text(_currency.format(balance), style: AppTheme.heading(fontSize: 15, color: palette.textPrimary)),
+                Text(
+                  _currency.format(balance),
+                  style: AppTheme.heading(fontSize: 15, color: balance < 0 ? AppColors.peach : palette.textPrimary),
+                ),
                 const SizedBox(width: 6),
                 Text('›', style: TextStyle(fontSize: 14, color: palette.borderStrong)),
               ],
@@ -88,6 +92,24 @@ Widget previewWalletCard() {
       createdAt: DateTime(2026, 1, 1),
     ),
     balance: 1250000,
+    palette: AppPalette.light,
+    onTap: () {},
+  );
+}
+
+@Preview(name: 'WalletCard · saldo minus')
+Widget previewWalletCardNegative() {
+  return WalletCard(
+    wallet: Wallet(
+      id: 'preview-wallet-2',
+      name: 'Tabungan',
+      type: WalletType.savings,
+      color: '#FBD8B5',
+      iconType: IconType.system,
+      iconValue: 'wallet_savings',
+      createdAt: DateTime(2026, 1, 1),
+    ),
+    balance: -111,
     palette: AppPalette.light,
     onTap: () {},
   );

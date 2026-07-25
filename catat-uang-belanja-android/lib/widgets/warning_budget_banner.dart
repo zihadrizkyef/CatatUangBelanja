@@ -24,6 +24,10 @@ class WarningBudgetBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final clampedPct = status.pct.clamp(0, 100);
+    final isOverLimit = status.pct >= 100;
+    final message = isOverLimit
+        ? '${status.category.name} udah lewat batas nih, Bun — yuk cek lagi ya 💛'
+        : '${status.category.name} udah mendekati batas nih, Bun — yuk dipantau terus ya 💛';
     return Container(
       margin: const EdgeInsets.only(top: 8, bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -41,7 +45,7 @@ class WarningBudgetBanner extends StatelessWidget {
                 height: 59,
                 decoration: BoxDecoration(color: palette.cardBg, shape: BoxShape.circle),
                 alignment: Alignment.center,
-                child: OpenMojiIcon(AppIcons.byIconValue[status.category.iconValue] ?? AppIcons.budgetTarget, size: 32),
+                child: OpenMojiIcon(AppIcons.byIconValue[status.category.iconValue] ?? AppIcons.budgetTarget, size: 48),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -56,8 +60,16 @@ class WarningBudgetBanner extends StatelessWidget {
                   ],
                 ),
               ),
-              Text('${status.pct}%', style: AppTheme.heading(fontSize: 15, color: palette.warningText)),
+              Text('$clampedPct%', style: AppTheme.heading(fontSize: 15, color: palette.warningText)),
             ],
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              message,
+              style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: palette.warningText),
+            ),
           ),
           const SizedBox(height: 10),
           ClipRRect(
@@ -89,7 +101,26 @@ final _previewStatus = BudgetStatus(
   pct: 85,
 );
 
-@Preview(name: 'WarningBudgetBanner')
+@Preview(name: 'WarningBudgetBanner · mendekati batas')
 Widget previewWarningBudgetBanner() {
   return WarningBudgetBanner(status: _previewStatus, palette: AppPalette.light);
+}
+
+final _previewOverLimitStatus = BudgetStatus(
+  category: const Category(
+    id: 'preview-category-2',
+    name: 'Hiburan Keluarga',
+    type: CategoryType.expense,
+    color: '#9B8FBD',
+    iconType: IconType.system,
+    iconValue: 'category_entertainment',
+  ),
+  budget: Budget(id: 'preview-budget-2', categoryId: 'preview-category-2', limitAmount: 200000, createdAt: DateTime(2026, 1, 1), updatedAt: DateTime(2026, 1, 1)),
+  used: 235000,
+  pct: 118,
+);
+
+@Preview(name: 'WarningBudgetBanner · lewat batas')
+Widget previewWarningBudgetBannerOverLimit() {
+  return WarningBudgetBanner(status: _previewOverLimitStatus, palette: AppPalette.light);
 }

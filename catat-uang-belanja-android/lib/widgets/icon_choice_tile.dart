@@ -28,7 +28,7 @@ class IconChoiceTile extends StatelessWidget {
             border: Border.all(color: selected ? AppColors.accent : palette.border, width: 2),
           ),
           alignment: Alignment.center,
-          child: OpenMojiIcon(iconAsset, size: 22),
+          child: OpenMojiIcon(iconAsset, size: 33),
         ),
       ),
     );

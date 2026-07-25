@@ -1,0 +1,15 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+# Repro for UX-001: home screen briefly renders the fully-empty state
+# ("Rp0" / "Belum ada transaksi, Bun...") on cold start even when the
+# database already has wallets/transactions/budgets, because
+# FinanceRepository()..load() in main.dart is fire-and-forget (not
+# awaited before runApp) and there is no isLoading flag — screens render
+# with empty in-memory lists for one or more frames until load() resolves
+# and calls notifyListeners(). Best viewed by force-stopping the app
+# (so it's a genuine cold start, not a warm resume) and screenshotting
+# immediately after launch — the exact frame count needed to catch it
+# varies with device speed, so this may need a couple of tries.
+- launchApp:
+    clearState: false
+- takeScreenshot: ux-001-cold-start-frame

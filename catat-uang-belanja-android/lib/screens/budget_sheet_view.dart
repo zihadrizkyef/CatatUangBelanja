@@ -8,6 +8,7 @@ import '../models/icon_type.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import '../utils/sheet_padding.dart';
 import '../widgets/category_chip.dart';
 import '../widgets/category_prompt_card.dart';
 import '../widgets/numeric_keypad.dart';
@@ -18,10 +19,10 @@ import '../widgets/segment_button.dart';
 const _weekdayShortLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 String _periodLabel(BudgetPeriod period) => switch (period) {
-      BudgetPeriod.monthly => 'Bulanan',
-      BudgetPeriod.weekly => 'Mingguan',
-      BudgetPeriod.event => 'Event',
-    };
+  BudgetPeriod.monthly => 'Bulanan',
+  BudgetPeriod.weekly => 'Mingguan',
+  BudgetPeriod.event => 'Event',
+};
 
 /// Pure layout for [BudgetSheet]'s add/edit bottom sheet: category grid (add
 /// mode) or a fixed category display (edit mode), the reset-period picker
@@ -84,238 +85,309 @@ class BudgetSheetView extends StatelessWidget {
     final palette = AppPalette.of(context);
 
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
+      ),
       decoration: BoxDecoration(
         color: palette.cardBg,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: EdgeInsets.fromLTRB(18, 18, 18, 22 + MediaQuery.of(context).viewInsets.bottom),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  isEdit ? 'Edit Anggaran' : 'Tambah Anggaran',
-                  style: AppTheme.heading(fontSize: 17, color: palette.textPrimary),
-                ),
-                Material(
-                  color: palette.warningBg,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    customBorder: const CircleBorder(),
-                    onTap: onClose,
-                    child: SizedBox(
-                      width: 38,
-                      height: 38,
-                      child: Icon(Icons.close, size: 20, color: palette.textPrimary),
+      padding: EdgeInsets.fromLTRB(18, 18, 18, sheetBottomPadding(context)),
+      // Explicit scrollbar thumb (see PM-06) — this sheet's content is often
+      // taller than the screen (category grid + period picker + anchor
+      // picker + keypad), with no other hint that it scrolls.
+      child: Scrollbar(
+        thumbVisibility: true,
+        radius: const Radius.circular(8),
+        thickness: 3,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isEdit ? 'Edit Anggaran' : 'Tambah Anggaran',
+                    style: AppTheme.heading(
+                      fontSize: 17,
+                      color: palette.textPrimary,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            if (!isEdit)
-              if (categoryOptions.isNotEmpty)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final cat in categoryOptions)
-                      CategoryChip(
-                        category: cat,
-                        selected: selectedCategory?.id == cat.id,
-                        selectedColor: AppColors.gold,
-                        palette: palette,
-                        onTap: () => onSelectCategory(cat),
+                  Material(
+                    color: palette.warningBg,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: onClose,
+                      child: SizedBox(
+                        width: 38,
+                        height: 38,
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: palette.textPrimary,
+                        ),
                       ),
-                  ],
-                )
-              else
-                CategoryPromptCard(
-                  palette: palette,
-                  message: hasExpenseCategories
-                      ? '🎉 Semua kategori pengeluaran sudah punya anggaran'
-                      : '😅 Kamu belum punya kategori pengeluaran',
-                  buttonLabel: hasExpenseCategories ? '+ Tambah Kategori Baru' : '+ Buat Kategori Dulu',
-                  onButtonTap: onCreateCategory,
-                )
-            else if (selectedCategory != null)
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (!isEdit)
+                if (categoryOptions.isNotEmpty)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final cat in categoryOptions)
+                        CategoryChip(
+                          category: cat,
+                          selected: selectedCategory?.id == cat.id,
+                          selectedColor: AppColors.gold,
+                          palette: palette,
+                          onTap: () => onSelectCategory(cat),
+                        ),
+                    ],
+                  )
+                else
+                  CategoryPromptCard(
+                    palette: palette,
+                    message: hasExpenseCategories
+                        ? '🎉 Semua kategori pengeluaran sudah punya anggaran'
+                        : '😅 Kamu belum punya kategori pengeluaran',
+                    buttonLabel: hasExpenseCategories
+                        ? '+ Tambah Kategori Baru'
+                        : '+ Buat Kategori Dulu',
+                    onButtonTap: onCreateCategory,
+                  )
+              else if (selectedCategory != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: palette.chipNeutral,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      if (AppIcons.byIconValue[selectedCategory!.iconValue] !=
+                          null)
+                        OpenMojiIcon(
+                          AppIcons.byIconValue[selectedCategory!.iconValue]!,
+                          size: 54,
+                        ),
+                      const SizedBox(width: 10),
+                      Text(
+                        selectedCategory!.name,
+                        style: AppTheme.body(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: palette.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 16),
+              Text(
+                'Periode reset anggaran',
+                style: AppTheme.body(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: palette.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(color: palette.chipNeutral, borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: palette.chipNeutral,
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Row(
                   children: [
-                    if (AppIcons.byIconValue[selectedCategory!.iconValue] != null)
-                      OpenMojiIcon(AppIcons.byIconValue[selectedCategory!.iconValue]!, size: 36),
-                    const SizedBox(width: 10),
-                    Text(
-                      selectedCategory!.name,
-                      style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: palette.textPrimary),
-                    ),
+                    for (final opt in BudgetPeriod.values)
+                      Expanded(
+                        child: SegmentButton(
+                          label: _periodLabel(opt),
+                          selected: period == opt,
+                          color: AppColors.accent,
+                          onTap: () => onSelectPeriod(opt),
+                        ),
+                      ),
                   ],
                 ),
               ),
-            const SizedBox(height: 16),
-            Text(
-              'Periode reset anggaran',
-              style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: palette.textSecondary),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(color: palette.chipNeutral, borderRadius: BorderRadius.circular(12)),
-              child: Row(
-                children: [
-                  for (final opt in BudgetPeriod.values)
+              const SizedBox(height: 14),
+              if (period == BudgetPeriod.monthly) ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Reset setiap tanggal berapa?',
+                    style: AppTheme.body(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: palette.textSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 34,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 31,
+                    separatorBuilder: (_, _) => const SizedBox(width: 6),
+                    itemBuilder: (_, i) => OptionChip(
+                      label: '${i + 1}',
+                      selected: monthDay == i + 1,
+                      onTap: () => onSelectMonthDay(i + 1),
+                      size: 34,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ] else if (period == BudgetPeriod.weekly) ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Reset setiap hari apa?',
+                    style: AppTheme.body(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: palette.textSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (var i = 0; i < _weekdayShortLabels.length; i++)
+                      OptionChip(
+                        label: _weekdayShortLabels[i],
+                        selected: weekday == i + 1,
+                        onTap: () => onSelectWeekday(i + 1),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ] else ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Reset saat ada pemasukan dari kategori:',
+                    style: AppTheme.body(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: palette.textSecondary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final cat in eventCategoryOptions)
+                      CategoryChip(
+                        category: cat,
+                        selected: selectedEventCategoryId == cat.id,
+                        selectedColor: AppColors.accent,
+                        palette: palette,
+                        onTap: () => onSelectEventCategory(cat),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+              Text(
+                'Batas anggaran per periode',
+                textAlign: TextAlign.center,
+                style: AppTheme.body(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: palette.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Rp ${amountStr.isEmpty ? '0' : NumberFormat('#,###', 'id_ID').format(int.parse(amountStr))}',
+                textAlign: TextAlign.center,
+                style: AppTheme.heading(
+                  fontSize: 30,
+                  color: palette.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 14),
+              NumericKeypad(
+                confirmColor: AppColors.gold,
+                palette: palette,
+                onKeyTap: onKeyTap,
+              ),
+              if (isEdit) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
                     Expanded(
-                      child: SegmentButton(
-                        label: _periodLabel(opt),
-                        selected: period == opt,
-                        color: AppColors.accent,
-                        onTap: () => onSelectPeriod(opt),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            if (period == BudgetPeriod.monthly) ...[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Reset setiap tanggal berapa?',
-                  style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: palette.textSecondary),
-                ),
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                height: 34,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 31,
-                  separatorBuilder: (_, _) => const SizedBox(width: 6),
-                  itemBuilder: (_, i) => OptionChip(
-                    label: '${i + 1}',
-                    selected: monthDay == i + 1,
-                    onTap: () => onSelectMonthDay(i + 1),
-                    size: 34,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ] else if (period == BudgetPeriod.weekly) ...[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Reset setiap hari apa?',
-                  style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: palette.textSecondary),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (var i = 0; i < _weekdayShortLabels.length; i++)
-                    OptionChip(
-                      label: _weekdayShortLabels[i],
-                      selected: weekday == i + 1,
-                      onTap: () => onSelectWeekday(i + 1),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-            ] else ...[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Reset saat ada pemasukan dari kategori:',
-                  style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: palette.textSecondary),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final cat in eventCategoryOptions)
-                    CategoryChip(
-                      category: cat,
-                      selected: selectedEventCategoryId == cat.id,
-                      selectedColor: AppColors.accent,
-                      palette: palette,
-                      onTap: () => onSelectEventCategory(cat),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-            ],
-            Text(
-              'Batas anggaran per periode',
-              textAlign: TextAlign.center,
-              style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: palette.textSecondary),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Rp ${amountStr.isEmpty ? '0' : NumberFormat('#,###', 'id_ID').format(int.parse(amountStr))}',
-              textAlign: TextAlign.center,
-              style: AppTheme.heading(fontSize: 30, color: palette.textPrimary),
-            ),
-            const SizedBox(height: 14),
-            NumericKeypad(confirmColor: AppColors.gold, palette: palette, onKeyTap: onKeyTap),
-            if (isEdit) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: Material(
-                      color: palette.chipNeutral,
-                      borderRadius: BorderRadius.circular(12),
-                      child: InkWell(
+                      child: Material(
+                        color: palette.chipNeutral,
                         borderRadius: BorderRadius.circular(12),
-                        onTap: onReset,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 11),
-                          child: Text(
-                            '↻ Reset Sekarang',
-                            textAlign: TextAlign.center,
-                            style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: palette.textPrimary),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: onReset,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            child: Text(
+                              '↻ Reset Sekarang',
+                              textAlign: TextAlign.center,
+                              style: AppTheme.body(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: palette.textPrimary,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      child: InkWell(
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Material(
+                        color: Colors.transparent,
                         borderRadius: BorderRadius.circular(12),
-                        onTap: onDelete,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 11),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.accent),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'Hapus Anggaran',
-                            textAlign: TextAlign.center,
-                            style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.accent),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: onDelete,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColors.accent),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Hapus Anggaran',
+                              textAlign: TextAlign.center,
+                              style: AppTheme.body(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.accent,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

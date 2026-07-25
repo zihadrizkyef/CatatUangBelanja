@@ -1,0 +1,33 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+# Repro for QA-001: transfer transactions show as generic "Pengeluaran" on
+# Beranda's "Transaksi Terbaru" card instead of "Transfer ke <wallet>".
+- launchApp
+- tapOn: "Beranda"
+- tapOn:
+    point: "964,1962"
+- waitForAnimationToEnd
+- tapOn: "Pemasukan"
+- tapOn: "5"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "Gaji"
+- tapOn: "✓"
+- waitForAnimationToEnd
+- tapOn: "Dompet"
+- tapOn:
+    point: "819,618"
+- waitForAnimationToEnd
+- tapOn: "2"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "✓"
+- waitForAnimationToEnd
+- tapOn: "Beranda"
+- takeScreenshot: qa-001-repro-beranda-transfer-row

@@ -54,8 +54,9 @@ void main() {
     secondWalletId = bankWallet.id;
   });
 
-  test('load() populates the seeded wallet and household categories', () {
-    expect(repository.wallets.length, 2);
+  test('load() populates the seeded wallets and household categories', () {
+    // 4 default wallets (doc 4.2 starter set) + the bank wallet added above.
+    expect(repository.wallets.length, 5);
     expect(repository.categories.length, 13);
   });
 

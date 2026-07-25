@@ -16,6 +16,8 @@ class AppIcons {
   static const String syncSyncing = '$_base/arrows_counterclockwise.svg';
   static const String syncOffline = '$_base/cloud.svg';
 
+  static const String transfer = '$_base/arrows_counterclockwise.svg';
+
   static const String budgetTarget = '$_base/dart.svg';
   static const String budgetSafe = '$_base/herb.svg';
   static const String budgetSeedling = '$_base/seedling.svg';
@@ -60,6 +62,7 @@ class AppIcons {
     'wallet_cash': '$_base/purse.svg',
     'wallet_bank': '$_base/bank.svg',
     'wallet_ewallet': '$_base/mobile_phone.svg',
+    'wallet_savings': '$_base/bank.svg',
   };
 
   /// Icon (and matching pastel color, mirroring `AppDatabase._seed`) choices
@@ -90,6 +93,7 @@ class AppIcons {
     'wallet_cash': '#F7C6D9',
     'wallet_bank': '#DCD3F0',
     'wallet_ewallet': '#C4EBD9',
+    'wallet_savings': '#FBD8B5',
   };
 
   static List<String> get walletIconChoices => walletIconColors.keys.toList();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/category.dart' as models;
 import '../models/transaction.dart';
 import '../repositories/finance_repository.dart';
 import '../theme/app_colors.dart';
@@ -194,6 +195,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
         .where((t) => t.type == TransactionType.expense)
         .fold(0, (s, t) => s + t.amount);
 
+    final hasComparisonData = !(previousExpense == 0 && expense == 0);
     final changePct = previousExpense == 0
         ? (expense == 0 ? 0 : 100)
         : ((expense - previousExpense) * 100 / previousExpense).round();
@@ -233,6 +235,16 @@ class _SummaryScreenState extends State<SummaryScreen> {
     final buckets = _buckets(now, allTx);
     final budgetStatuses = repository.budgetStatuses;
 
+    // Ranked independently of budgetStatuses (which only covers categories
+    // with a budget set) — see PM-02: "Pengeluaran Terbesar" should reflect
+    // actual spending, not budget existence.
+    final topSpending = <CategorySpending>[
+      for (final entry in sortedCategories)
+        if (repository.categories.where((c) => c.id == entry.key).firstOrNull
+            case final models.Category category?)
+          (category: category, amount: entry.value),
+    ];
+
     return SummaryView(
       period: _period,
       onPeriodChanged: (p) => setState(() => _period = p),
@@ -240,9 +252,11 @@ class _SummaryScreenState extends State<SummaryScreen> {
       expense: expense,
       changePct: changePct,
       improved: improved,
+      hasComparisonData: hasComparisonData,
       legendData: legendData,
       buckets: buckets,
       budgetStatuses: budgetStatuses,
+      topSpending: topSpending,
       onOpenBudget: () => _openBudgetScreen(context),
     );
   }

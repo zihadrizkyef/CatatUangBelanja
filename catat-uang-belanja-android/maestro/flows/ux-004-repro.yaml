@@ -1,0 +1,26 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+# Repro for UX-004: the "Transfer" chip on Dompet (wallet_view.dart line
+# ~105) renders a raw platform emoji glyph ('🔁 Transfer' as a literal
+# string) instead of an OpenMoji icon from lib/theme/app_icons.dart,
+# breaking the app's own icon convention (see CLAUDE.md/AppIcons
+# rationale) and looking visually inconsistent with every other icon on
+# this same screen (wallet icons, nav bar icons, etc. all render via
+# OpenMojiIcon).
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn: "Generate Data Dummy"
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn: "Ya, Isi"
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn: "Dompet"
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: ux-004-transfer-emoji-icon

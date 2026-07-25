@@ -1,0 +1,10 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+---
+- launchApp
+- tapOn: "Dompet"
+- takeScreenshot: qa-dummycheck-01-wallets
+- tapOn: "Beranda"
+- tapOn:
+    point: "939,685"
+- waitForAnimationToEnd
+- takeScreenshot: qa-dummycheck-02-budgets

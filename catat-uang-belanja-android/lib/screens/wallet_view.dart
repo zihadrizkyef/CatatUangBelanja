@@ -3,49 +3,56 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:intl/intl.dart';
 
-import '../models/category.dart' as models;
 import '../models/icon_type.dart';
-import '../models/transaction.dart';
 import '../models/wallet.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../widgets/dashed_line.dart';
 import '../widgets/empty_state.dart';
-import '../widgets/transaction_history_row.dart';
+import '../widgets/openmoji_icon.dart';
 import '../widgets/wallet_card.dart';
 
 final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
-/// A single row of Dompet's "Riwayat Transaksi" list, pre-joined with its
-/// category/wallet and a display-ready relative date.
-typedef TransactionHistoryRowData = ({Transaction transaction, models.Category? category, Wallet? wallet, String relativeDate});
-
 /// Pure Dompet layout: hero header with the combined balance across all
-/// wallets, the wallet list, and transaction history. All data and
-/// callbacks come from the [WalletScreen] container — this widget never
-/// reads [FinanceRepository] or [ScaffoldMessenger] itself.
+/// wallets, and the (search-filterable) wallet list. All data and callbacks
+/// come from the [WalletScreen] container — this widget never reads
+/// [FinanceRepository] or [ScaffoldMessenger] itself.
 class WalletView extends StatelessWidget {
   const WalletView({
     super.key,
     required this.totalBalance,
+    required this.hasWallets,
     required this.wallets,
     required this.walletBalances,
-    required this.transactions,
+    required this.canTransfer,
+    required this.searchController,
     required this.onTapAddWallet,
+    required this.onTapTransfer,
     required this.onTapWallet,
   });
 
   final int totalBalance;
+
+  /// Whether the household has any (non-archived) wallet at all — controls
+  /// the "belum ada dompet" empty state, distinct from a search yielding no
+  /// results ([wallets] empty while this stays true).
+  final bool hasWallets;
   final List<Wallet> wallets;
   final List<int> walletBalances;
-  final List<TransactionHistoryRowData> transactions;
+
+  /// Whether there are enough wallets (2+) for a transfer to make sense.
+  final bool canTransfer;
+  final TextEditingController searchController;
   final VoidCallback onTapAddWallet;
+  final VoidCallback onTapTransfer;
   final ValueChanged<Wallet> onTapWallet;
 
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
+    final noSearchResults = hasWallets && wallets.isEmpty;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: AppTheme.accentHeaderOverlay,
@@ -77,18 +84,96 @@ class WalletView extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Dompet Saya', style: AppTheme.heading(fontSize: 13, color: palette.textPrimary)),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('Dompet Saya', style: AppTheme.heading(fontSize: 13, color: palette.textPrimary)),
+                        ),
+                        if (canTransfer) ...[
+                          Material(
+                            color: palette.chipNeutral,
+                            borderRadius: BorderRadius.circular(15),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(15),
+                              onTap: onTapTransfer,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const OpenMojiIcon(AppIcons.transfer, size: 16),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Transfer',
+                                      style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: palette.textPrimary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Material(
+                          color: palette.warningBg,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: onTapAddWallet,
+                            child: SizedBox(
+                              width: 30,
+                              height: 30,
+                              child: Icon(Icons.add, size: 18, color: palette.warningText),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 10),
-                    if (wallets.isEmpty)
+                    if (hasWallets)
+                      TextField(
+                        controller: searchController,
+                        style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Cari dompet…',
+                          hintStyle: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.textSecondary),
+                          prefixIcon: Icon(Icons.search, size: 18, color: palette.textSecondary),
+                          filled: true,
+                          fillColor: palette.chipNeutral,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: palette.border),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: palette.border),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                          ),
+                        ),
+                      ),
+                    if (hasWallets) const SizedBox(height: 12),
+                    if (!hasWallets)
                       EmptyState(
                         palette: palette,
                         icon: AppIcons.wallet,
                         iconSize: 42,
                         title: 'Belum ada dompet, Bun. Yuk tambah yang pertama.',
+                      )
+                    else if (noSearchResults)
+                      EmptyState(
+                        palette: palette,
+                        icon: AppIcons.wallet,
+                        iconSize: 34,
+                        bordered: false,
+                        title: 'Dompet tidak ditemukan.',
                       )
                     else
                       for (var i = 0; i < wallets.length; i++)
@@ -97,53 +182,6 @@ class WalletView extends StatelessWidget {
                           balance: walletBalances[i],
                           palette: palette,
                           onTap: () => onTapWallet(wallets[i]),
-                        ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Material(
-                        color: palette.warningBg,
-                        borderRadius: BorderRadius.circular(14),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: onTapAddWallet,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                            child: Text(
-                              '+ Tambah Dompet',
-                              textAlign: TextAlign.center,
-                              style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.warningText),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 22, 16, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Riwayat Transaksi', style: AppTheme.heading(fontSize: 13, color: palette.textPrimary)),
-                    const SizedBox(height: 6),
-                    if (transactions.isEmpty)
-                      EmptyState(
-                        palette: palette,
-                        icon: AppIcons.emptyReceipt,
-                        iconSize: 45,
-                        bordered: false,
-                        title: 'Belum ada transaksi di dompet ini, Bun.',
-                      )
-                    else
-                      for (final row in transactions)
-                        TransactionHistoryRow(
-                          transaction: row.transaction,
-                          category: row.category,
-                          wallet: row.wallet,
-                          relativeDate: row.relativeDate,
-                          palette: palette,
                         ),
                   ],
                 ),
@@ -170,33 +208,13 @@ final _previewWallet = Wallet(
 Widget previewWalletView() {
   return WalletView(
     totalBalance: 2450000,
+    hasWallets: true,
     wallets: [_previewWallet],
     walletBalances: const [2450000],
-    transactions: [
-      (
-        transaction: Transaction(
-          id: 'preview-tx',
-          type: TransactionType.expense,
-          amount: 45000,
-          walletId: 'preview-wallet',
-          categoryId: 'preview-category',
-          dateTime: DateTime(2026, 7, 6),
-          createdAt: DateTime(2026, 7, 6),
-          updatedAt: DateTime(2026, 7, 6),
-        ),
-        category: const models.Category(
-          id: 'preview-category',
-          name: 'Dapur',
-          type: models.CategoryType.expense,
-          color: '#E8637C',
-          iconType: IconType.system,
-          iconValue: 'category_kitchen',
-        ),
-        wallet: _previewWallet,
-        relativeDate: 'Hari ini',
-      ),
-    ],
+    canTransfer: false,
+    searchController: TextEditingController(),
     onTapAddWallet: () {},
+    onTapTransfer: () {},
     onTapWallet: (_) {},
   );
 }
@@ -205,10 +223,28 @@ Widget previewWalletView() {
 Widget previewWalletViewEmpty() {
   return WalletView(
     totalBalance: 0,
+    hasWallets: false,
     wallets: const [],
     walletBalances: const [],
-    transactions: const [],
+    canTransfer: false,
+    searchController: TextEditingController(),
     onTapAddWallet: () {},
+    onTapTransfer: () {},
+    onTapWallet: (_) {},
+  );
+}
+
+@Preview(name: 'WalletView · pencarian kosong')
+Widget previewWalletViewNoSearchResults() {
+  return WalletView(
+    totalBalance: 2450000,
+    hasWallets: true,
+    wallets: const [],
+    walletBalances: const [],
+    canTransfer: false,
+    searchController: TextEditingController(text: 'xyz'),
+    onTapAddWallet: () {},
+    onTapTransfer: () {},
     onTapWallet: (_) {},
   );
 }

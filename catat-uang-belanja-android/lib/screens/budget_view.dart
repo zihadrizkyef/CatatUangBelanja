@@ -20,6 +20,7 @@ class BudgetView extends StatelessWidget {
   const BudgetView({
     super.key,
     required this.budgetStatuses,
+    required this.hasCategoryOptions,
     required this.onTapRow,
     required this.onTapAdd,
     required this.onTapBack,
@@ -27,6 +28,11 @@ class BudgetView extends StatelessWidget {
   });
 
   final List<BudgetStatus> budgetStatuses;
+
+  /// Whether there's still an expense category without a budget — controls
+  /// whether "+ Tambah Anggaran" shows, or the "semua sudah dianggarkan"
+  /// banner instead.
+  final bool hasCategoryOptions;
   final ValueChanged<BudgetStatus> onTapRow;
   final VoidCallback onTapAdd;
   final VoidCallback onTapBack;
@@ -89,25 +95,37 @@ class BudgetView extends StatelessWidget {
                           onReset: () => onTapReset(status),
                         ),
                     const SizedBox(height: 14),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Material(
-                        color: palette.warningBg,
-                        borderRadius: BorderRadius.circular(14),
-                        child: InkWell(
+                    if (!hasCategoryOptions && budgetStatuses.isNotEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(color: palette.chipNeutral, borderRadius: BorderRadius.circular(14)),
+                        child: Text(
+                          '🎉 Semua kategori sudah punya anggaran',
+                          textAlign: TextAlign.center,
+                          style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: palette.textSecondary),
+                        ),
+                      )
+                    else if (hasCategoryOptions)
+                      SizedBox(
+                        width: double.infinity,
+                        child: Material(
+                          color: palette.warningBg,
                           borderRadius: BorderRadius.circular(14),
-                          onTap: onTapAdd,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                            child: Text(
-                              '+ Tambah Anggaran',
-                              textAlign: TextAlign.center,
-                              style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.warningText),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: onTapAdd,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              child: Text(
+                                '+ Tambah Anggaran',
+                                textAlign: TextAlign.center,
+                                style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.warningText),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -143,6 +161,7 @@ Widget previewBudgetView() {
         pct: 85,
       ),
     ],
+    hasCategoryOptions: true,
     onTapRow: (_) {},
     onTapAdd: () {},
     onTapBack: () {},
@@ -154,6 +173,39 @@ Widget previewBudgetView() {
 Widget previewBudgetViewEmpty() {
   return BudgetView(
     budgetStatuses: const [],
+    hasCategoryOptions: true,
+    onTapRow: (_) {},
+    onTapAdd: () {},
+    onTapBack: () {},
+    onTapReset: (_) {},
+  );
+}
+
+@Preview(name: 'BudgetView · semua sudah dianggarkan')
+Widget previewBudgetViewAllBudgeted() {
+  return BudgetView(
+    budgetStatuses: [
+      BudgetStatus(
+        category: const models.Category(
+          id: 'preview-category',
+          name: 'Dapur',
+          type: models.CategoryType.expense,
+          color: '#E8637C',
+          iconType: IconType.system,
+          iconValue: 'category_kitchen',
+        ),
+        budget: Budget(
+          id: 'preview-budget',
+          categoryId: 'preview-category',
+          limitAmount: 1000000,
+          createdAt: DateTime(2026, 1, 1),
+          updatedAt: DateTime(2026, 1, 1),
+        ),
+        used: 400000,
+        pct: 40,
+      ),
+    ],
+    hasCategoryOptions: false,
     onTapRow: (_) {},
     onTapAdd: () {},
     onTapBack: () {},

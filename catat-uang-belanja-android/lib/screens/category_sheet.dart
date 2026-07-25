@@ -6,6 +6,8 @@ import '../models/category.dart' as models;
 import '../models/icon_type.dart';
 import '../repositories/finance_repository.dart';
 import '../theme/app_icons.dart';
+import '../utils/confirm_delete.dart';
+import '../utils/snackbar.dart';
 import 'category_sheet_view.dart';
 
 /// Add/edit bottom sheet container for a single category: name field + the
@@ -44,7 +46,10 @@ class _CategorySheetState extends State<CategorySheet> {
 
   Future<void> _save() async {
     final name = _nameController.text.trim();
-    if (name.isEmpty) return;
+    if (name.isEmpty) {
+      showSnackBarMessage(context, 'Isi nama kategorinya dulu ya, Bun');
+      return;
+    }
 
     final repository = context.read<FinanceRepository>();
     final color = AppIcons.categoryIconColors[_iconValue] ?? '#F3ECE6';
@@ -76,6 +81,12 @@ class _CategorySheetState extends State<CategorySheet> {
       );
       return;
     }
+    final confirmed = await confirmDelete(
+      context,
+      title: 'Hapus Kategori?',
+      message: 'Kategori "${existing.name}" akan dihapus dan tidak bisa dikembalikan, Bun.',
+    );
+    if (!confirmed || !mounted) return;
     await repository.deleteCategory(existing.id);
     if (mounted) Navigator.of(context).pop();
   }

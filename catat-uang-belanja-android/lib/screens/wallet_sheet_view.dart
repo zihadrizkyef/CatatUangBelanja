@@ -4,6 +4,7 @@ import 'package:flutter/widget_previews.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import '../utils/sheet_padding.dart';
 import '../widgets/icon_choice_tile.dart';
 import '../widgets/openmoji_icon.dart';
 
@@ -42,7 +43,7 @@ class WalletSheetView extends StatelessWidget {
         color: palette.cardBg,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: EdgeInsets.fromLTRB(18, 18, 18, 22 + MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.fromLTRB(18, 18, 18, sheetBottomPadding(context)),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -78,7 +79,7 @@ class WalletSheetView extends StatelessWidget {
                   height: 56,
                   decoration: BoxDecoration(color: palette.chipNeutral, borderRadius: BorderRadius.circular(16)),
                   alignment: Alignment.center,
-                  child: selectedIconAsset != null ? OpenMojiIcon(selectedIconAsset, size: 32) : null,
+                  child: selectedIconAsset != null ? OpenMojiIcon(selectedIconAsset, size: 48) : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

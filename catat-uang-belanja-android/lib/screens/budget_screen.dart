@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/budget_status.dart';
+import '../models/category.dart' as models;
 import '../repositories/finance_repository.dart';
 import 'budget_sheet.dart';
 import 'budget_view.dart';
@@ -30,9 +31,13 @@ class _BudgetScreenState extends State<BudgetScreen> {
   @override
   Widget build(BuildContext context) {
     final repository = context.watch<FinanceRepository>();
+    final budgetedIds = repository.budgets.map((b) => b.categoryId).toSet();
+    final hasCategoryOptions = repository.categories
+        .any((c) => c.type == models.CategoryType.expense && !budgetedIds.contains(c.id));
 
     return BudgetView(
       budgetStatuses: repository.budgetStatuses,
+      hasCategoryOptions: hasCategoryOptions,
       onTapRow: (status) => _openSheet(existing: status),
       onTapAdd: _openSheet,
       onTapBack: () => Navigator.of(context).pop(),

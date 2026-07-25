@@ -19,11 +19,13 @@ void main() {
     }
   });
 
-  test('AppDatabase creates schema and seeds default wallet + categories', () async {
+  test('AppDatabase creates schema and seeds default wallets + categories', () async {
     final db = await AppDatabase.instance.database;
 
+    // 4 default wallets (doc 4.2 starter set): Dompet Tunai, Rekening Bank,
+    // E-Wallet, Tabungan.
     final wallets = await db.query('wallets');
-    expect(wallets.length, 1);
+    expect(wallets.length, 4);
     expect(wallets.first['name'], 'Dompet Tunai');
 
     final categories = await db.query('categories');

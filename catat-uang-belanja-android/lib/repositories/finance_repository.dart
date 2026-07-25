@@ -28,6 +28,14 @@ class FinanceRepository extends ChangeNotifier {
   List<Transaction> _transactions = [];
   List<Budget> _budgets = [];
 
+  /// True until the first [load] finishes. `main.dart` creates this
+  /// repository with a fire-and-forget `..load()`, so screens render for a
+  /// few frames before real data arrives — watching this flag lets them show
+  /// a neutral loading state instead of a misleading "belum ada apa-apa"
+  /// empty state on a cold start with real data already on disk (see UX-001).
+  bool _isLoading = true;
+  bool get isLoading => _isLoading;
+
   /// Defaults to light on a fresh install; [toggleDarkMode] pins it to an
   /// explicit light/dark choice, mirroring the mockup's own
   /// override-vs-system-preference behavior. Persisted to the `settings`
@@ -86,6 +94,7 @@ class FinanceRepository extends ChangeNotifier {
     }
 
     await _syncBudgetPeriods();
+    _isLoading = false;
     notifyListeners();
   }
 
@@ -106,6 +115,11 @@ class FinanceRepository extends ChangeNotifier {
   /// Hard delete, mirroring [deleteCategory]/[deleteBudget] — wallets have no
   /// soft-delete column. Callers keep at least one wallet around (Dompet's
   /// delete flow refuses to remove the last one), mirroring the mockup.
+  /// Callers should also keep a wallet from being deleted while any
+  /// transaction still references it as [Transaction.walletId] or
+  /// [Transaction.targetWalletId] (Dompet's delete flow checks [transactions]
+  /// first), since [totalBalance]/[balanceOf] silently drop transactions
+  /// whose wallet id no longer resolves — orphaning them instead of erroring.
   Future<void> deleteWallet(String walletId) async {
     final db = await _appDatabase.database;
     await db.delete('wallets', where: 'id = ?', whereArgs: [walletId]);
@@ -278,6 +292,30 @@ class FinanceRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Moves money between two wallets (doc 4.3): recorded as a single
+  /// [TransactionType.transfer] row rather than a paired in/out transaction —
+  /// see [balanceOf] for how both sides are applied. Reuses [addTransaction]
+  /// so budget-period sync and persistence stay in one place.
+  Future<void> addTransfer({
+    required String fromWalletId,
+    required String toWalletId,
+    required int amount,
+    String? note,
+  }) {
+    final now = DateTime.now();
+    return addTransaction(Transaction(
+      id: const Uuid().v4(),
+      type: TransactionType.transfer,
+      amount: amount,
+      walletId: fromWalletId,
+      targetWalletId: toWalletId,
+      dateTime: now,
+      note: note,
+      createdAt: now,
+      updatedAt: now,
+    ));
+  }
+
   /// Wallet balance, derived on the fly from active transactions (doc 4.2) —
   /// never stored. Transfers apply to both the source and target wallet.
   int balanceOf(String walletId) {
@@ -326,10 +364,20 @@ class FinanceRepository extends ChangeNotifier {
     final categoriesByIconValue = {for (final c in _categories) c.iconValue: c};
     Category? categoryFor(String iconValue) => categoriesByIconValue[iconValue];
 
-    final cashWallet = _wallets.firstWhere((w) => w.type == WalletType.cash);
+    final existingCash = _wallets.where((w) => w.type == WalletType.cash).firstOrNull;
     final existingBank = _wallets.where((w) => w.iconValue == 'wallet_bank').firstOrNull;
     final existingEWallet = _wallets.where((w) => w.iconValue == 'wallet_ewallet').firstOrNull;
 
+    final cashWallet = existingCash ??
+        Wallet(
+          id: uuid.v4(),
+          name: 'Dompet Tunai',
+          type: WalletType.cash,
+          color: '#F7C6D9',
+          iconType: IconType.system,
+          iconValue: 'wallet_cash',
+          createdAt: now,
+        );
     final bankWallet = existingBank ??
         Wallet(
           id: uuid.v4(),
@@ -352,6 +400,7 @@ class FinanceRepository extends ChangeNotifier {
         );
 
     final newWallets = [
+      if (existingCash == null) cashWallet,
       if (existingBank == null) bankWallet,
       if (existingEWallet == null) eWallet,
     ];

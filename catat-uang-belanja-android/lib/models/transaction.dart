@@ -46,6 +46,10 @@ class Transaction {
     String? categoryId,
     DateTime? dateTime,
     String? note,
+    // `note ?? this.note` alone can't express "clear the note" since passing
+    // null is indistinguishable from not passing it — this flag lets a
+    // caller (see TransactionSheet's edit mode) explicitly clear it.
+    bool clearNote = false,
     String? attachmentUrl,
     bool? isDeleted,
     SyncStatus? syncStatus,
@@ -59,7 +63,7 @@ class Transaction {
       targetWalletId: targetWalletId ?? this.targetWalletId,
       categoryId: categoryId ?? this.categoryId,
       dateTime: dateTime ?? this.dateTime,
-      note: note ?? this.note,
+      note: clearNote ? null : (note ?? this.note),
       attachmentUrl: attachmentUrl ?? this.attachmentUrl,
       recurringId: recurringId,
       isDeleted: isDeleted ?? this.isDeleted,

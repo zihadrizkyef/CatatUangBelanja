@@ -49,7 +49,7 @@ class CategoryChip extends StatelessWidget {
           ),
           child: Column(
             children: [
-              if (iconAsset != null) OpenMojiIcon(iconAsset, size: 36),
+              if (iconAsset != null) OpenMojiIcon(iconAsset, size: 54),
               const SizedBox(height: 4),
               Text(
                 category.name,

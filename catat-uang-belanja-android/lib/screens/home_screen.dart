@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/transaction.dart';
 import '../repositories/finance_repository.dart';
+import '../utils/relative_date.dart';
+import 'all_transactions_screen.dart';
 import 'budget_screen.dart';
 import 'home_view.dart';
+import 'transaction_sheet.dart';
 
 /// Beranda tab container: reads [FinanceRepository], derives the budget
 /// warning/recent-transaction data [HomeView] needs, and wires up navigation
 /// callbacks (Kelola anggaran, Lihat semua, sync toast).
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.onGoToSummary});
-
-  /// Switches the parent [AppShell] to the Rangkuman tab ("Lihat semua →").
-  final VoidCallback? onGoToSummary;
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -27,18 +28,21 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'Selamat malam, Bun 👋';
   }
 
-  String _relativeDate(DateTime dateTime) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final day = DateTime(dateTime.year, dateTime.month, dateTime.day);
-    final diff = today.difference(day).inDays;
-    if (diff <= 0) return 'Hari ini';
-    if (diff == 1) return 'Kemarin';
-    return '$diff hari lalu';
-  }
-
   void _openBudgetScreen() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen()));
+  }
+
+  void _openAllTransactions() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AllTransactionsScreen()));
+  }
+
+  void _editTransaction(Transaction transaction) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => TransactionSheet(existing: transaction),
+    );
   }
 
   void _showComingSoon() {
@@ -62,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return HomeView(
       greeting: _greeting(),
+      isLoading: repository.isLoading,
       totalBalance: repository.totalBalance,
       budgetStatuses: budgetStatuses,
       topWarning: topWarning,
@@ -71,12 +76,14 @@ class _HomeScreenState extends State<HomeScreen> {
             transaction: t,
             category: repository.categories.where((c) => c.id == t.categoryId).firstOrNull,
             wallet: repository.wallets.where((w) => w.id == t.walletId).firstOrNull,
-            relativeDate: _relativeDate(t.dateTime),
+            targetWallet: repository.wallets.where((w) => w.id == t.targetWalletId).firstOrNull,
+            relativeDate: relativeDateLabel(t.dateTime),
+            onTap: () => _editTransaction(t),
           ),
       ],
       onTapSync: _showComingSoon,
       onOpenBudget: _openBudgetScreen,
-      onGoToSummary: widget.onGoToSummary,
+      onSeeAllTransactions: _openAllTransactions,
     );
   }
 }

@@ -14,61 +14,89 @@ import 'openmoji_icon.dart';
 
 final _currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp', decimalDigits: 0);
 
-/// A single row in Dompet's "Riwayat Transaksi" list, followed by a dashed
-/// divider.
+/// A single row in a "Riwayat Transaksi" list, followed by a dashed divider.
+/// [wallet] means different things depending on [transaction]'s type: for
+/// income/expense it's the transaction's own wallet (shown as a sub-label
+/// when there's no note); for a transfer it's the *counterpart* wallet
+/// (source or destination, whichever isn't the wallet this list is scoped
+/// to), used to render "Transfer dari/ke `<wallet>`". [isTransferIn] tells a
+/// transfer row apart from an outgoing one — irrelevant for income/expense.
+/// [relativeDate] is optional so callers that already group rows under a
+/// date header (e.g. Semua Transaksi) can omit the redundant per-row date.
+/// [onTap] is optional — when set, the row opens (e.g.) an edit sheet.
+/// [showDivider] should be false for the last row in a card/group so the
+/// divider doesn't dangle just above the container's own bottom edge.
 class TransactionHistoryRow extends StatelessWidget {
   const TransactionHistoryRow({
     super.key,
     required this.transaction,
     required this.category,
     required this.wallet,
-    required this.relativeDate,
     required this.palette,
+    this.relativeDate,
+    this.isTransferIn = false,
+    this.onTap,
+    this.showDivider = true,
   });
 
   final Transaction transaction;
   final models.Category? category;
   final Wallet? wallet;
-  final String relativeDate;
+  final String? relativeDate;
   final AppPalette palette;
+  final bool isTransferIn;
+  final VoidCallback? onTap;
+  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
-    final isIncome = transaction.type == TransactionType.income;
-    final label = category?.name ?? (isIncome ? 'Pemasukan' : 'Pengeluaran');
-    final sub = (transaction.note?.isNotEmpty ?? false) ? transaction.note! : (wallet?.name ?? '');
+    final isTransfer = transaction.type == TransactionType.transfer;
+    final isPositive = transaction.type == TransactionType.income || (isTransfer && isTransferIn);
+    final label = isTransfer
+        ? (isTransferIn ? 'Transfer dari ${wallet?.name ?? '-'}' : 'Transfer ke ${wallet?.name ?? '-'}')
+        : (category?.name ?? (isPositive ? 'Pemasukan' : 'Pengeluaran'));
+    final sub = (transaction.note?.isNotEmpty ?? false) ? transaction.note! : (isTransfer ? '' : (wallet?.name ?? ''));
+    final subLine = [sub, relativeDate ?? ''].where((s) => s.isNotEmpty).join(' · ');
     final iconAsset = category != null ? AppIcons.byIconValue[category!.iconValue] : null;
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          child: Row(
-            children: [
-              iconAsset != null
-                  ? OpenMojiIcon(iconAsset, size: 28)
-                  : Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, size: 26, color: palette.textPrimary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label, style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.textPrimary)),
-                    Text(
-                      '$sub · $relativeDate',
-                      style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: palette.textSecondary),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              child: Row(
+                children: [
+                  iconAsset != null
+                      ? OpenMojiIcon(iconAsset, size: 42)
+                      : Icon(
+                          isTransfer ? Icons.swap_horiz_rounded : (isPositive ? Icons.arrow_downward : Icons.arrow_upward),
+                          size: 26,
+                          color: palette.textPrimary,
+                        ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(label, style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.textPrimary)),
+                        if (subLine.isNotEmpty)
+                          Text(subLine, style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: palette.textSecondary)),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  Text(
+                    '${isPositive ? '+' : '-'}${_currency.format(transaction.amount)}',
+                    style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: isPositive ? AppColors.gold : AppColors.peach),
+                  ),
+                ],
               ),
-              Text(
-                '${isIncome ? '+' : '-'}${_currency.format(transaction.amount)}',
-                style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: isIncome ? AppColors.gold : AppColors.peach),
-              ),
-            ],
+            ),
           ),
         ),
-        DashedLine(color: palette.borderStrong),
+        if (showDivider) DashedLine(color: palette.borderStrong),
       ],
     );
   }
@@ -104,6 +132,35 @@ Widget previewTransactionHistoryRow() {
       iconValue: 'wallet_cash',
       createdAt: DateTime(2026, 1, 1),
     ),
+    relativeDate: 'Hari ini',
+    palette: AppPalette.light,
+  );
+}
+
+@Preview(name: 'TransactionHistoryRow · transfer masuk')
+Widget previewTransactionHistoryRowTransferIn() {
+  return TransactionHistoryRow(
+    transaction: Transaction(
+      id: 'preview-transfer',
+      type: TransactionType.transfer,
+      amount: 500000,
+      walletId: 'preview-wallet-bank',
+      targetWalletId: 'preview-wallet-cash',
+      dateTime: DateTime(2026, 7, 6),
+      createdAt: DateTime(2026, 7, 6),
+      updatedAt: DateTime(2026, 7, 6),
+    ),
+    category: null,
+    wallet: Wallet(
+      id: 'preview-wallet-bank',
+      name: 'Rekening Bank',
+      type: WalletType.bank,
+      color: '#DCD3F0',
+      iconType: IconType.system,
+      iconValue: 'wallet_bank',
+      createdAt: DateTime(2026, 1, 1),
+    ),
+    isTransferIn: true,
     relativeDate: 'Hari ini',
     palette: AppPalette.light,
   );

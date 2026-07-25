@@ -25,6 +25,10 @@ final _currency = NumberFormat.currency(
 
 enum Period { harian, mingguan, bulanan, tahunan }
 
+/// A category's total expense for the active period, ranked independently of
+/// whether it has a budget set — used by "Pengeluaran Terbesar".
+typedef CategorySpending = ({models.Category category, int amount});
+
 extension PeriodLabel on Period {
   String get label => switch (this) {
     Period.harian => 'Harian',
@@ -48,9 +52,11 @@ class SummaryView extends StatelessWidget {
     required this.expense,
     required this.changePct,
     required this.improved,
+    required this.hasComparisonData,
     required this.legendData,
     required this.buckets,
     required this.budgetStatuses,
+    required this.topSpending,
     required this.onOpenBudget,
   });
 
@@ -60,9 +66,15 @@ class SummaryView extends StatelessWidget {
   final int expense;
   final int changePct;
   final bool improved;
+
+  /// False when both this period and the previous one have zero expense —
+  /// there's nothing to meaningfully compare, so the badge shows a neutral
+  /// message instead of a misleading "lebih banyak" on a fresh install.
+  final bool hasComparisonData;
   final List<CategoryLegendEntry> legendData;
   final List<SummaryBucket> buckets;
   final List<BudgetStatus> budgetStatuses;
+  final List<CategorySpending> topSpending;
   final VoidCallback onOpenBudget;
 
   @override
@@ -199,28 +211,39 @@ class SummaryView extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${improved ? '▼' : '▲'} ${changePct.abs()}%',
-                            style: AppTheme.body(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: improved
-                                  ? AppColors.okBar
-                                  : AppColors.accent,
+                      if (hasComparisonData)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '${improved ? '▼' : '▲'} ${changePct.abs()}%',
+                              style: AppTheme.body(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: improved
+                                    ? AppColors.okBar
+                                    : AppColors.accent,
+                              ),
                             ),
-                          ),
-                          Text(
-                            improved ? 'lebih hemat' : 'lebih boros',
-                            style: AppTheme.body(
-                              fontSize: 10.5,
-                              color: palette.textSecondary,
+                            Text(
+                              improved ? 'lebih hemat' : 'lebih banyak dari sebelumnya',
+                              style: AppTheme.body(
+                                fontSize: 10.5,
+                                color: palette.textSecondary,
+                              ),
                             ),
+                          ],
+                        )
+                      else
+                        Text(
+                          'Belum ada data untuk dibandingkan, Bun',
+                          textAlign: TextAlign.end,
+                          style: AppTheme.body(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: palette.textSecondary,
                           ),
-                        ],
-                      ),
+                        ),
                     ],
                   ),
                 ),
@@ -332,7 +355,7 @@ class SummaryView extends StatelessWidget {
                                   Row(
                                     children: [
                                       if (AppIcons.byIconValue[b.category.iconValue] != null) ...[
-                                        OpenMojiIcon(AppIcons.byIconValue[b.category.iconValue]!, size: 22),
+                                        OpenMojiIcon(AppIcons.byIconValue[b.category.iconValue]!, size: 33),
                                         const SizedBox(width: 4),
                                       ],
                                       Expanded(
@@ -391,7 +414,7 @@ class SummaryView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    if (budgetStatuses.isEmpty)
+                    if (topSpending.isEmpty)
                       EmptyState(
                         palette: palette,
                         icon: AppIcons.trophy,
@@ -399,10 +422,11 @@ class SummaryView extends StatelessWidget {
                         title: 'Belum ada pengeluaran untuk dirangking, Bun.',
                       )
                     else
-                      for (var i = 0; i < budgetStatuses.length; i++)
+                      for (var i = 0; i < topSpending.length; i++)
                         TopSpendingRow(
                           rank: i + 1,
-                          status: budgetStatuses[i],
+                          category: topSpending[i].category,
+                          amount: topSpending[i].amount,
                           palette: palette,
                         ),
                     if (improved) ...[
@@ -462,6 +486,7 @@ Widget previewSummaryViewWithData() {
     expense: 1850000,
     changePct: -12,
     improved: true,
+    hasComparisonData: true,
     legendData: [
       (label: 'Dapur', value: 850000, color: AppColors.legend[0]),
       (label: 'Transportasi', value: 400000, color: AppColors.legend[1]),
@@ -487,6 +512,20 @@ Widget previewSummaryViewWithData() {
         pct: 85,
       ),
     ],
+    topSpending: [
+      (category: _previewCategory, amount: 850000),
+      (
+        category: models.Category(
+          id: 'preview-category-2',
+          name: 'Transportasi',
+          type: models.CategoryType.expense,
+          color: '#9B8FBD',
+          iconType: IconType.system,
+          iconValue: 'category_transport',
+        ),
+        amount: 400000,
+      ),
+    ],
     onOpenBudget: () {},
   );
 }
@@ -500,12 +539,14 @@ Widget previewSummaryViewEmpty() {
     expense: 0,
     changePct: 0,
     improved: false,
+    hasComparisonData: false,
     legendData: const [],
     buckets: const [
       (label: 'Sen', income: 0, expense: 0),
       (label: 'Sel', income: 0, expense: 0),
     ],
     budgetStatuses: const [],
+    topSpending: const [],
     onOpenBudget: () {},
   );
 }

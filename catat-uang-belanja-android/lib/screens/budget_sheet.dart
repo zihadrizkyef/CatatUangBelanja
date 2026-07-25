@@ -6,7 +6,10 @@ import '../models/budget.dart';
 import '../models/budget_status.dart';
 import '../models/category.dart' as models;
 import '../repositories/finance_repository.dart';
+import '../utils/confirm_delete.dart';
+import '../utils/snackbar.dart';
 import 'budget_sheet_view.dart';
+import 'category_screen.dart';
 
 /// Add/edit bottom sheet container: category grid (add mode only — the
 /// category is fixed once a budget exists), the reset-period picker
@@ -73,8 +76,18 @@ class _BudgetSheetState extends State<BudgetSheet> {
 
   Future<void> _save() async {
     final amount = int.tryParse(_amountStr);
-    if (amount == null || amount <= 0 || _category == null) return;
-    if (_period == BudgetPeriod.event && _eventCategoryId == null) return;
+    if (amount == null || amount <= 0) {
+      showSnackBarMessage(context, 'Isi batas anggarannya dulu ya, Bun');
+      return;
+    }
+    if (_category == null) {
+      showSnackBarMessage(context, 'Pilih kategorinya dulu ya, Bun');
+      return;
+    }
+    if (_period == BudgetPeriod.event && _eventCategoryId == null) {
+      showSnackBarMessage(context, 'Pilih kategori pemasukan pemicunya dulu ya, Bun');
+      return;
+    }
 
     final repository = context.read<FinanceRepository>();
     final now = DateTime.now();
@@ -103,8 +116,15 @@ class _BudgetSheetState extends State<BudgetSheet> {
   }
 
   Future<void> _delete() async {
-    if (widget.existing == null) return;
-    await context.read<FinanceRepository>().deleteBudget(widget.existing!.budget.id);
+    final existing = widget.existing;
+    if (existing == null) return;
+    final confirmed = await confirmDelete(
+      context,
+      title: 'Hapus Anggaran?',
+      message: 'Anggaran "${existing.category.name}" akan dihapus dan tidak bisa dikembalikan, Bun.',
+    );
+    if (!confirmed || !mounted) return;
+    await context.read<FinanceRepository>().deleteBudget(existing.budget.id);
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -115,9 +135,9 @@ class _BudgetSheetState extends State<BudgetSheet> {
   }
 
   void _goCreateCategory() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Segera hadir ✨'), duration: Duration(milliseconds: 1200)),
-    );
+    final navigator = Navigator.of(context);
+    navigator.pop();
+    navigator.push(MaterialPageRoute(builder: (_) => const CategoryScreen(autoOpenAdd: true)));
   }
 
   @override

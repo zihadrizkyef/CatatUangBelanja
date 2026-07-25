@@ -3,12 +3,15 @@ import 'package:provider/provider.dart';
 
 import '../models/wallet.dart';
 import '../repositories/finance_repository.dart';
+import 'transfer_sheet.dart';
+import 'wallet_detail_screen.dart';
 import 'wallet_sheet.dart';
 import 'wallet_view.dart';
 
-/// Dompet tab container: reads [FinanceRepository] for the wallet list,
-/// combined balance, and transaction history, and wires up the add/edit
-/// [WalletSheet]; hands the rest to [WalletView].
+/// Dompet tab container: reads [FinanceRepository] for the (search-filtered)
+/// wallet list and combined balance, wires up the add [WalletSheet] and
+/// [TransferSheet], and pushes [WalletDetailScreen] when a wallet is
+/// tapped; hands the rest to [WalletView].
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
 
@@ -17,47 +20,60 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
-  String _relativeDate(DateTime dateTime) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final day = DateTime(dateTime.year, dateTime.month, dateTime.day);
-    final diff = today.difference(day).inDays;
-    if (diff <= 0) return 'Hari ini';
-    if (diff == 1) return 'Kemarin';
-    return '$diff hari lalu';
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() => setState(() {}));
   }
 
-  void _openSheet({Wallet? existing}) {
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _openAddWalletSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => WalletSheet(existing: existing),
+      builder: (_) => const WalletSheet(),
     );
+  }
+
+  void _openTransferSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const TransferSheet(),
+    );
+  }
+
+  void _openWalletDetail(Wallet wallet) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => WalletDetailScreen(walletId: wallet.id)));
   }
 
   @override
   Widget build(BuildContext context) {
     final repository = context.watch<FinanceRepository>();
-    final wallets = repository.wallets.where((w) => !w.isArchived).toList();
-
-    final transactions = repository.transactions.toList()..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+    final allWallets = repository.wallets.where((w) => !w.isArchived).toList();
+    final query = _searchController.text.trim().toLowerCase();
+    final filteredWallets =
+        query.isEmpty ? allWallets : allWallets.where((w) => w.name.toLowerCase().contains(query)).toList();
 
     return WalletView(
       totalBalance: repository.totalBalance,
-      wallets: wallets,
-      walletBalances: [for (final w in wallets) repository.balanceOf(w.id)],
-      transactions: [
-        for (final t in transactions)
-          (
-            transaction: t,
-            category: repository.categories.where((c) => c.id == t.categoryId).firstOrNull,
-            wallet: repository.wallets.where((w) => w.id == t.walletId).firstOrNull,
-            relativeDate: _relativeDate(t.dateTime),
-          ),
-      ],
-      onTapAddWallet: () => _openSheet(),
-      onTapWallet: (wallet) => _openSheet(existing: wallet),
+      hasWallets: allWallets.isNotEmpty,
+      wallets: filteredWallets,
+      walletBalances: [for (final w in filteredWallets) repository.balanceOf(w.id)],
+      canTransfer: allWallets.length >= 2,
+      searchController: _searchController,
+      onTapAddWallet: _openAddWalletSheet,
+      onTapTransfer: _openTransferSheet,
+      onTapWallet: _openWalletDetail,
     );
   }
 }
