@@ -42,6 +42,8 @@ enum SyncStatus {
 
 enum BudgetPeriod {
   Monthly
+  Weekly
+  Event
 }
 
 enum Frequency {
@@ -62,10 +64,13 @@ enum AppLockType {
   None
 }
 
-// Login is phone number + OTP (doc 4.10 / 6.1) — no password stored.
+// Login is Google Sign-In (no password / OTP stored) — see doc 4.10 / 6.1.
 model User {
   id                 String               @id @default(uuid())
-  phoneNumber        String               @unique
+  googleId           String               @unique
+  email              String               @unique
+  name               String
+  avatarUrl          String?
   createdAt          DateTime             @default(now())
   wallets            Wallet[]
   categories         Category[]
@@ -86,6 +91,9 @@ model Wallet {
   iconValue   String
   isArchived  Boolean    @default(false)
   createdAt   DateTime   @default(now())
+  // Not part of the Flutter model (doc 5.1) — server-managed, used only as
+  // the pull-sync cursor (see /sync/pull).
+  updatedAt   DateTime   @updatedAt
 
   transactionsFrom Transaction[] @relation("WalletSource")
   transactionsTo   Transaction[] @relation("WalletTarget")
@@ -103,6 +111,9 @@ model Category {
   iconType     IconType
   iconValue    String
   isSystem     Boolean       @default(false)
+  // Not part of the Flutter model (doc 5.3) — server-managed, used only as
+  // the pull-sync cursor (see /sync/pull).
+  updatedAt    DateTime      @updatedAt
   transactions Transaction[]
   budgets      Budget[]
 
@@ -136,15 +147,20 @@ model Transaction {
 }
 
 model Budget {
-  id          String       @id @default(uuid())
-  user        User         @relation(fields: [userId], references: [id])
-  userId      String
-  category    Category     @relation(fields: [categoryId], references: [id])
-  categoryId  String
-  period      BudgetPeriod @default(Monthly)
-  limitAmount Int
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id                     String       @id @default(uuid())
+  user                   User         @relation(fields: [userId], references: [id])
+  userId                 String
+  category               Category     @relation(fields: [categoryId], references: [id])
+  categoryId             String
+  period                 BudgetPeriod @default(Monthly)
+  // Day-of-month (1-31) or day-of-week when period = Monthly/Weekly; null for Event.
+  resetAnchor            Int?
+  // Income category that triggers a reset when period = Event; null otherwise.
+  triggerCategoryId      String?
+  limitAmount            Int
+  currentPeriodStartedAt DateTime
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
 
   @@index([userId])
 }
@@ -162,6 +178,9 @@ model RecurringTransaction {
   nextRunAt    DateTime
   isActive     Boolean       @default(true)
   note         String?
+  // Not part of the Flutter model — server-managed, used only as the
+  // pull-sync cursor (see /sync/pull).
+  updatedAt    DateTime      @updatedAt
   transactions Transaction[]
 
   @@index([userId])
@@ -176,4 +195,5 @@ model Settings {
   appLockEnabled   Boolean     @default(false)
   appLockType      AppLockType @default(None)
   lastSyncedAt     DateTime?
+  updatedAt        DateTime    @updatedAt
 }
