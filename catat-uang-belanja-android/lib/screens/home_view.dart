@@ -9,6 +9,7 @@ import '../models/category.dart' as models;
 import '../models/icon_type.dart';
 import '../models/transaction.dart';
 import '../models/wallet.dart';
+import '../services/sync_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
@@ -49,12 +50,14 @@ class HomeView extends StatelessWidget {
     required this.budgetStatuses,
     required this.topWarning,
     required this.recentTransactions,
+    required this.syncState,
     required this.onTapSync,
     required this.onOpenBudget,
     required this.onSeeAllTransactions,
   });
 
   final String greeting;
+  final SyncState syncState;
 
   /// True while [FinanceRepository]'s initial load is still in flight — see
   /// UX-001. Shows a neutral spinner instead of the empty-state copy, which
@@ -85,7 +88,7 @@ class HomeView extends StatelessWidget {
               : ListView(
                   padding: EdgeInsets.zero,
                   children: [
-                    HeroBanner(greeting: greeting, onTapSync: onTapSync),
+                    HeroBanner(greeting: greeting, syncState: syncState, onTapSync: onTapSync),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                       child: Transform.translate(
@@ -337,6 +340,7 @@ Widget previewHomeViewWithWarning() {
         onTap: () {},
       ),
     ],
+    syncState: SyncState.idle,
     onTapSync: () {},
     onOpenBudget: () {},
     onSeeAllTransactions: () {},
@@ -352,6 +356,7 @@ Widget previewHomeViewEmpty() {
     budgetStatuses: const [],
     topWarning: null,
     recentTransactions: const [],
+    syncState: SyncState.idle,
     onTapSync: () {},
     onOpenBudget: () {},
     onSeeAllTransactions: () {},
@@ -367,6 +372,7 @@ Widget previewHomeViewLoading() {
     budgetStatuses: const [],
     topWarning: null,
     recentTransactions: const [],
+    syncState: SyncState.idle,
     onTapSync: () {},
     onOpenBudget: () {},
     onSeeAllTransactions: () {},

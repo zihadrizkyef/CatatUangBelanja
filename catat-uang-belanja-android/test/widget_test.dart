@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:path/path.dart';
@@ -14,6 +15,18 @@ void main() {
     // pumpWidget(MyApp()) below bypasses main(), so this test must repeat the
     // same locale-data init main() does before runApp.
     await initializeDateFormatting('id_ID', null);
+
+    // connectivity_plus's EventChannel has no platform implementation under
+    // `flutter test` (no real device) — SyncService subscribes to it as
+    // soon as MyApp builds, so without this mock every test would fail on
+    // an unhandled MissingPluginException reported via FlutterError (not
+    // catchable from app code, since the plugin reports it directly rather
+    // than through the stream's error channel).
+    const connectivityChannel = MethodChannel('dev.fluttercommunity.plus/connectivity_status');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      connectivityChannel,
+      (call) async => null,
+    );
 
     // Start from a clean on-disk database so the empty-state UI below is
     // deterministic across test runs (per project testing notes).

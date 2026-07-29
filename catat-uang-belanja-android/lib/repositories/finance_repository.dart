@@ -6,12 +6,16 @@ import 'package:sqflite/sqflite.dart' show ConflictAlgorithm;
 import 'package:uuid/uuid.dart';
 
 import '../db/app_database.dart';
+import '../models/app_lock_type.dart';
 import '../models/budget.dart';
 import '../models/budget_status.dart';
 import '../models/category.dart';
 import '../models/icon_type.dart';
 import '../models/transaction.dart';
 import '../models/wallet.dart';
+import '../services/auth_service.dart';
+import '../services/security_service.dart';
+import '../theme/app_icons.dart';
 
 /// Single app-wide state holder (provided via `provider` at the app root).
 /// Holds in-memory lists loaded from SQLite on [load]; every mutation writes
@@ -19,9 +23,14 @@ import '../models/wallet.dart';
 /// [notifyListeners]. There is no other state layer — new features extend
 /// this repository.
 class FinanceRepository extends ChangeNotifier {
-  FinanceRepository({AppDatabase? appDatabase}) : _appDatabase = appDatabase ?? AppDatabase.instance;
+  FinanceRepository({AppDatabase? appDatabase, SecurityService? securityService, AuthService? authService})
+      : _appDatabase = appDatabase ?? AppDatabase.instance,
+        _securityService = securityService ?? SecurityService(),
+        _authService = authService ?? AuthService();
 
   final AppDatabase _appDatabase;
+  final SecurityService _securityService;
+  final AuthService _authService;
 
   List<Wallet> _wallets = [];
   List<Category> _categories = [];
@@ -64,6 +73,121 @@ class FinanceRepository extends ChangeNotifier {
     );
   }
 
+  /// App-lock (doc 4.11). `none` means the app opens straight to [AppShell];
+  /// `pin`/`biometric` require [AppLockGate] to pass a PIN/biometric check
+  /// first. Biometric mode still requires a PIN underneath as a fallback
+  /// (device with no biometrics enrolled, or a failed biometric prompt).
+  AppLockType _appLockType = AppLockType.none;
+  AppLockType get appLockType => _appLockType;
+  bool get appLockEnabled => _appLockType != AppLockType.none;
+
+  static const _appLockTypeKey = 'app_lock_type';
+
+  Future<void> enableAppLock(AppLockType type, {required String pin}) async {
+    // The PIN write must succeed before the lock is considered active —
+    // flipping the flag first could lock the user out with no PIN to
+    // actually unlock with.
+    await _securityService.setPin(pin);
+    _appLockType = type;
+    notifyListeners();
+
+    final db = await _appDatabase.database;
+    await db.insert(
+      'settings',
+      {'key': _appLockTypeKey, 'value': type.name},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Switches between `pin`/`biometric` without touching the stored PIN —
+  /// both modes keep the same PIN as a fallback, so there's nothing to
+  /// re-enter when just changing which one is primary. Use [enableAppLock]
+  /// instead when there's no PIN set yet (app-lock was off).
+  Future<void> setAppLockType(AppLockType type) async {
+    assert(type != AppLockType.none, 'use disableAppLock() to turn off app lock');
+    _appLockType = type;
+    notifyListeners();
+
+    final db = await _appDatabase.database;
+    await db.insert(
+      'settings',
+      {'key': _appLockTypeKey, 'value': type.name},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> disableAppLock() async {
+    await _securityService.clearPin();
+    _appLockType = AppLockType.none;
+    notifyListeners();
+
+    final db = await _appDatabase.database;
+    await db.insert(
+      'settings',
+      {'key': _appLockTypeKey, 'value': AppLockType.none.name},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<bool> verifyPin(String pin) => _securityService.verifyPin(pin);
+
+  Future<bool> isBiometricAvailable() => _securityService.isBiometricAvailable();
+
+  Future<bool> authenticateWithBiometric() => _securityService.authenticateWithBiometric();
+
+  /// Login is Google Sign-In (doc 4.10/6.1) — [AuthGate] shows [LoginScreen]
+  /// instead of the app when this is false. Refreshed on [load] and after
+  /// sign-in/sign-out via [refreshLoginState] so screens that already branch
+  /// on it (e.g. the forgot-PIN warning) stay in sync without needing their
+  /// own AuthService plumbing.
+  bool _isLoggedIn = false;
+  bool get isLoggedIn => _isLoggedIn;
+  String? _userEmail;
+  String? get userEmail => _userEmail;
+
+  Future<void> refreshLoginState() async {
+    final user = await _authService.currentUser;
+    _isLoggedIn = user != null;
+    _userEmail = user?.email;
+    notifyListeners();
+  }
+
+  Future<void> signOut() async {
+    await _authService.signOut();
+    await refreshLoginState();
+  }
+
+  /// Local profile (name + avatar), editable offline; Phase 3 will add
+  /// best-effort sync to a backend account on top of this.
+  String _profileName = '';
+  String get profileName => _profileName;
+
+  String _profileAvatarIconValue = AppIcons.profileAvatar;
+  String get profileAvatarIconValue => _profileAvatarIconValue;
+
+  static const _profileNameKey = 'profile_name';
+  static const _profileAvatarIconValueKey = 'profile_avatar_icon_value';
+
+  Future<void> updateProfile({String? name, String? avatarIconValue}) async {
+    if (name != null) _profileName = name;
+    if (avatarIconValue != null) _profileAvatarIconValue = avatarIconValue;
+    notifyListeners();
+
+    final db = await _appDatabase.database;
+    final batch = db.batch();
+    if (name != null) {
+      batch.insert('settings', {'key': _profileNameKey, 'value': name}, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    if (avatarIconValue != null) {
+      batch.insert(
+        'settings',
+        {'key': _profileAvatarIconValueKey, 'value': avatarIconValue},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
   List<Wallet> get wallets => List.unmodifiable(_wallets);
   List<Category> get categories => List.unmodifiable(_categories);
   List<Budget> get budgets => List.unmodifiable(_budgets);
@@ -73,6 +197,11 @@ class FinanceRepository extends ChangeNotifier {
   List<Transaction> get transactions =>
       List.unmodifiable(_transactions.where((t) => !t.isDeleted));
 
+  /// Includes soft-deleted rows — used by [SyncService] to push tombstones
+  /// to the backend (doc 4.10) so a deletion on one device propagates to
+  /// others instead of the row silently reappearing there.
+  List<Transaction> get allTransactionsIncludingDeleted => List.unmodifiable(_transactions);
+
   Future<void> load() async {
     final db = await _appDatabase.database;
 
@@ -81,19 +210,33 @@ class FinanceRepository extends ChangeNotifier {
       db.query('categories'),
       db.query('transactions'),
       db.query('budgets'),
-      db.query('settings', where: 'key = ?', whereArgs: [_themeModeKey], limit: 1),
+      db.query('settings'),
     ]);
-    final [walletRows, categoryRows, transactionRows, budgetRows, themeModeRow] = results;
+    final [walletRows, categoryRows, transactionRows, budgetRows, settingsRows] = results;
 
     _wallets = walletRows.map(Wallet.fromMap).toList();
     _categories = categoryRows.map(Category.fromMap).toList();
     _transactions = transactionRows.map(Transaction.fromMap).toList();
     _budgets = budgetRows.map(Budget.fromMap).toList();
-    if (themeModeRow.isNotEmpty) {
-      _themeMode = ThemeMode.values.byName(themeModeRow.first['value'] as String);
+
+    final settings = {for (final row in settingsRows) row['key'] as String: row['value'] as String};
+    if (settings[_themeModeKey] case final value?) {
+      _themeMode = ThemeMode.values.byName(value);
+    }
+    if (settings[_appLockTypeKey] case final value?) {
+      _appLockType = AppLockType.fromName(value);
+    }
+    if (settings[_profileNameKey] case final value?) {
+      _profileName = value;
+    }
+    if (settings[_profileAvatarIconValueKey] case final value?) {
+      _profileAvatarIconValue = value;
     }
 
     await _syncBudgetPeriods();
+    final user = await _authService.currentUser;
+    _isLoggedIn = user != null;
+    _userEmail = user?.email;
     _isLoading = false;
     notifyListeners();
   }
@@ -154,16 +297,21 @@ class FinanceRepository extends ChangeNotifier {
   }
 
   Future<void> addTransaction(Transaction transaction) async {
+    // Local writes always start Pending (doc 4.10/7.2 per-transaction sync
+    // status) — SyncService flips them to Synced after a successful push.
+    // Rows written by SyncService itself go through AppDatabase.upsertRows
+    // directly, bypassing this method, so this can't mis-flag pulled data.
+    final pending = transaction.copyWith(syncStatus: SyncStatus.pending);
     final db = await _appDatabase.database;
-    await db.insert('transactions', transaction.toMap());
-    _transactions = [..._transactions, transaction];
-    await _syncBudgetPeriods(newTransaction: transaction);
+    await db.insert('transactions', pending.toMap());
+    _transactions = [..._transactions, pending];
+    await _syncBudgetPeriods(newTransaction: pending);
     notifyListeners();
   }
 
   Future<void> updateTransaction(Transaction transaction) async {
     final db = await _appDatabase.database;
-    final updated = transaction.copyWith(updatedAt: DateTime.now());
+    final updated = transaction.copyWith(updatedAt: DateTime.now(), syncStatus: SyncStatus.pending);
     await db.update('transactions', updated.toMap(), where: 'id = ?', whereArgs: [updated.id]);
     _transactions = [for (final t in _transactions) if (t.id == updated.id) updated else t];
     notifyListeners();
@@ -174,7 +322,7 @@ class FinanceRepository extends ChangeNotifier {
   /// out; the raw list above still contains them.
   Future<void> deleteTransaction(String transactionId) async {
     final existing = _transactions.firstWhere((t) => t.id == transactionId);
-    final deleted = existing.copyWith(isDeleted: true, updatedAt: DateTime.now());
+    final deleted = existing.copyWith(isDeleted: true, updatedAt: DateTime.now(), syncStatus: SyncStatus.pending);
 
     final db = await _appDatabase.database;
     await db.update('transactions', deleted.toMap(), where: 'id = ?', whereArgs: [transactionId]);

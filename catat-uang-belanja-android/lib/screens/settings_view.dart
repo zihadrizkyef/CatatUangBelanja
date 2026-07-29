@@ -5,6 +5,7 @@ import 'package:flutter/widget_previews.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
+import '../widgets/google_sign_in_button.dart';
 import '../widgets/section_label.dart';
 import '../widgets/openmoji_icon.dart';
 
@@ -29,21 +30,35 @@ class SettingsView extends StatelessWidget {
   const SettingsView({
     super.key,
     required this.isDark,
+    required this.profileName,
+    required this.profileAvatarIconValue,
+    required this.profileSubtitle,
+    required this.isLoggedIn,
+    required this.isSigningIn,
     required this.settingGroups,
     required this.onToggleDarkMode,
     required this.onTapEditProfile,
     required this.onTapGenerateDummyData,
     required this.onTapClearAllData,
     required this.onTapLogout,
+    required this.onTapLogin,
   });
 
   final bool isDark;
+  final String profileName;
+  final String profileAvatarIconValue;
+  final String profileSubtitle;
+  // Login is optional (doc 8's offline-first requirement) — this just
+  // toggles which of onTapLogin/onTapLogout the bottom action shows.
+  final bool isLoggedIn;
+  final bool isSigningIn;
   final List<SettingGroup> settingGroups;
   final ValueChanged<bool> onToggleDarkMode;
   final VoidCallback onTapEditProfile;
   final VoidCallback onTapGenerateDummyData;
   final VoidCallback onTapClearAllData;
   final VoidCallback onTapLogout;
+  final VoidCallback onTapLogin;
 
   @override
   Widget build(BuildContext context) {
@@ -92,16 +107,19 @@ class SettingsView extends StatelessWidget {
                               height: 73,
                               decoration: const BoxDecoration(color: Color(0xFFFCE0E1), shape: BoxShape.circle),
                               alignment: Alignment.center,
-                              child: const OpenMojiIcon(AppIcons.profileAvatar, size: 34),
+                              child: OpenMojiIcon(profileAvatarIconValue, size: 34),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Bunda Sari', style: AppTheme.heading(fontSize: 15, color: palette.textPrimary)),
                                   Text(
-                                    'sari@keluarga.id',
+                                    profileName.isEmpty ? 'Tanpa Nama' : profileName,
+                                    style: AppTheme.heading(fontSize: 15, color: palette.textPrimary),
+                                  ),
+                                  Text(
+                                    profileSubtitle,
                                     style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: palette.textSecondary),
                                   ),
                                 ],
@@ -261,25 +279,28 @@ class SettingsView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Material(
-                        color: palette.warningBg,
-                        borderRadius: BorderRadius.circular(14),
-                        child: InkWell(
+                    if (isLoggedIn)
+                      SizedBox(
+                        width: double.infinity,
+                        child: Material(
+                          color: palette.warningBg,
                           borderRadius: BorderRadius.circular(14),
-                          onTap: onTapLogout,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                            child: Text(
-                              'Keluar',
-                              textAlign: TextAlign.center,
-                              style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.warningText),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: onTapLogout,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              child: Text(
+                                'Keluar',
+                                textAlign: TextAlign.center,
+                                style: AppTheme.body(fontSize: 13, fontWeight: FontWeight.bold, color: palette.warningText),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
+                      )
+                    else
+                      GoogleSignInButton(isLoading: isSigningIn, onTap: isSigningIn ? null : onTapLogin),
                   ],
                 ),
               ),
@@ -295,6 +316,11 @@ class SettingsView extends StatelessWidget {
 Widget previewSettingsView() {
   return SettingsView(
     isDark: false,
+    profileName: 'Bunda Sari',
+    profileAvatarIconValue: AppIcons.profileAvatar,
+    profileSubtitle: 'Belum masuk',
+    isLoggedIn: false,
+    isSigningIn: false,
     settingGroups: [
       SettingGroup('Akun', [SettingItem(AppIcons.profile, 'Profil', () {}), SettingItem(AppIcons.security, 'Keamanan', () {})]),
       SettingGroup('Preferensi', [SettingItem(AppIcons.categoryBudgetSetting, 'Kategori & Anggaran', () {})]),
@@ -304,5 +330,28 @@ Widget previewSettingsView() {
     onTapGenerateDummyData: () {},
     onTapClearAllData: () {},
     onTapLogout: () {},
+    onTapLogin: () {},
+  );
+}
+
+@Preview(name: 'SettingsView · logged in')
+Widget previewSettingsViewLoggedIn() {
+  return SettingsView(
+    isDark: false,
+    profileName: 'Bunda Sari',
+    profileAvatarIconValue: AppIcons.profileAvatar,
+    profileSubtitle: 'sari@gmail.com',
+    isLoggedIn: true,
+    isSigningIn: false,
+    settingGroups: [
+      SettingGroup('Akun', [SettingItem(AppIcons.profile, 'Profil', () {}), SettingItem(AppIcons.security, 'Keamanan', () {})]),
+      SettingGroup('Preferensi', [SettingItem(AppIcons.categoryBudgetSetting, 'Kategori & Anggaran', () {})]),
+    ],
+    onToggleDarkMode: (_) {},
+    onTapEditProfile: () {},
+    onTapGenerateDummyData: () {},
+    onTapClearAllData: () {},
+    onTapLogout: () {},
+    onTapLogin: () {},
   );
 }

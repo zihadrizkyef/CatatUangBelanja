@@ -16,12 +16,20 @@ import '../models/wallet.dart';
 /// main() before runApp — this class only opens a database through whatever
 /// factory is already installed.
 class AppDatabase {
-  AppDatabase._();
+  AppDatabase._({String? dbName}) : _dbName = dbName ?? _defaultDbName;
 
   static final AppDatabase instance = AppDatabase._();
 
-  static const _dbName = 'catat_uang_belanja.db';
+  /// A separate, non-singleton instance backed by its own db file — lets a
+  /// test isolate itself from [instance] (and from other test files running
+  /// as concurrent processes under `flutter test`, all of which would
+  /// otherwise fight over the same shared on-disk file).
+  factory AppDatabase.forTesting(String dbName) => AppDatabase._(dbName: dbName);
+
+  static const _defaultDbName = 'catat_uang_belanja.db';
   static const _dbVersion = 3;
+
+  final String _dbName;
 
   Database? _database;
 
@@ -154,6 +162,19 @@ class AppDatabase {
       await txn.delete('categories');
       await txn.delete('wallets');
       await _seed(txn);
+    });
+  }
+
+  /// Upserts rows pulled from the backend (doc 4.10) into [table] — each
+  /// [rows] entry must already be shaped like [Wallet.toMap]/etc. (same
+  /// snake_case columns the local schema uses), which is exactly the wire
+  /// format `ApiClient.pull` returns. Used only by [SyncService].
+  Future<void> upsertRows(String table, List<Map<String, Object?>> rows) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      for (final row in rows) {
+        await txn.insert(table, row, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
     });
   }
 

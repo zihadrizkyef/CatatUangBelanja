@@ -6,14 +6,17 @@ import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import 'budget_screen.dart';
 import 'category_screen.dart';
+import 'login_screen.dart';
+import 'profile_edit_sheet.dart';
+import 'security_settings_screen.dart';
 import 'settings_view.dart';
 
 /// Pengaturan tab container: profile card, dark-mode toggle wired to
-/// [FinanceRepository.toggleDarkMode], and grouped settings. Only "Kelola
-/// Kategori", "Anggaran", and "Tentang Aplikasi" are live — the rest are
-/// "Segera hadir" stubs, matching the mockup's scope exactly. Reads
-/// [FinanceRepository] and wires up [Navigator]/dialog/toast actions; hands
-/// the rest to [SettingsView].
+/// [FinanceRepository.toggleDarkMode], and grouped settings. "Kelola
+/// Kategori", "Anggaran", "Tentang Aplikasi", "Profil"/"Edit Profil",
+/// "Keamanan", and "Keluar" are live; "Notifikasi"/"Bantuan" are still
+/// "Segera hadir" stubs. Reads [FinanceRepository] and wires up
+/// [Navigator]/sheet/dialog/toast actions; hands the rest to [SettingsView].
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -28,6 +31,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _openBudgetScreen() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen()));
+  }
+
+  void _openSecuritySettings() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SecuritySettingsScreen()));
+  }
+
+  void _openLogin() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+  }
+
+  void _openProfileEdit() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const ProfileEditSheet(),
+    );
   }
 
   void _showComingSoon() {
@@ -88,6 +108,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _logout() async {
+    final repository = context.read<FinanceRepository>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Keluar Akun?', style: AppTheme.heading(fontSize: 18)),
+        content: Text(
+          'Data yang sudah tersimpan tetap ada di HP ini — kamu tinggal masuk lagi kapan saja, Bun.',
+          style: AppTheme.body(fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Ya, Keluar')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await repository.signOut();
+  }
+
   void _showAbout() {
     showDialog<void>(
       context: context,
@@ -120,16 +160,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return SettingsView(
       isDark: isDark,
+      profileName: repository.profileName,
+      profileAvatarIconValue: repository.profileAvatarIconValue,
+      profileSubtitle: repository.userEmail ?? 'Belum masuk',
+      isLoggedIn: repository.isLoggedIn,
+      isSigningIn: false,
       settingGroups: [
         SettingGroup('Akun', [
-          SettingItem(AppIcons.profile, 'Profil', _showComingSoon),
-          SettingItem(AppIcons.security, 'Keamanan', _showComingSoon),
+          SettingItem(AppIcons.profile, 'Profil', _openProfileEdit),
+          SettingItem(AppIcons.security, 'Keamanan', _openSecuritySettings),
         ]),
         SettingGroup('Preferensi', [
           SettingItem(AppIcons.notification, 'Notifikasi', _showComingSoon),
           SettingItem(AppIcons.categoryBudgetSetting, 'Kelola Kategori', _openCategoryScreen),
           SettingItem(AppIcons.budgetTarget, 'Anggaran', _openBudgetScreen),
-          SettingItem(AppIcons.language, 'Bahasa', _showComingSoon),
         ]),
         SettingGroup('Lainnya', [
           SettingItem(AppIcons.help, 'Bantuan', _showComingSoon),
@@ -137,10 +181,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ]),
       ],
       onToggleDarkMode: (_) => repository.toggleDarkMode(),
-      onTapEditProfile: _showComingSoon,
+      onTapEditProfile: _openProfileEdit,
       onTapGenerateDummyData: _generateDummyData,
       onTapClearAllData: _clearAllData,
-      onTapLogout: _showComingSoon,
+      onTapLogout: _logout,
+      onTapLogin: _openLogin,
     );
   }
 }

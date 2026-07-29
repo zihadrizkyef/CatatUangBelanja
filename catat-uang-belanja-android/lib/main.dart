@@ -9,7 +9,10 @@ import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 import 'repositories/finance_repository.dart';
 import 'screens/app_shell.dart';
+import 'services/auth_service.dart';
+import 'services/sync_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/app_lock_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,8 +37,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => FinanceRepository()..load(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => FinanceRepository()..load()),
+        ChangeNotifierProxyProvider<FinanceRepository, SyncService>(
+          create: (context) => SyncService(repository: context.read<FinanceRepository>(), authService: AuthService()),
+          // FinanceRepository is created once for the app's lifetime, so the
+          // proxy update just keeps SyncService pointed at the same instance
+          // rather than needing to react to a changing one.
+          update: (context, repository, previous) =>
+              previous ?? SyncService(repository: repository, authService: AuthService()),
+        ),
+      ],
       child: Builder(
         builder: (context) {
           final themeMode = context.watch<FinanceRepository>().themeMode;
@@ -44,7 +57,11 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             themeMode: themeMode,
-            home: const AppShell(),
+            // Login is optional (doc 8's offline-first requirement takes
+            // priority — the whole app must work with zero account, see
+            // LoginScreen's real entry point: Pengaturan's "Masuk dengan
+            // Google" action, not a startup gate).
+            home: const AppLockGate(child: AppShell()),
           );
         },
       ),

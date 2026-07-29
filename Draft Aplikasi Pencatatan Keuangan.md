@@ -151,7 +151,7 @@ Fitur untuk memindahkan dana antar dompet tanpa memengaruhi total rangkuman pema
 
 Aplikasi bersifat offline-first: seluruh pencatatan tetap bisa dilakukan tanpa koneksi internet, dan data disinkronkan ke server begitu koneksi tersedia.
 
-- Pengguna login menggunakan nomor HP dan kode OTP (tanpa perlu membuat atau mengingat password), mengikuti pola yang sudah familiar seperti WhatsApp atau aplikasi e-wallet.
+- Pengguna login dengan akun Google ("Masuk dengan Google") — tanpa perlu membuat atau mengingat password sama sekali (keputusan produk, menggantikan rencana nomor HP + OTP di draft sebelumnya; lihat juga 6.1 dan 9). Login bersifat **opsional**: seluruh fitur inti tetap berfungsi penuh tanpa akun sama sekali, sesuai prinsip offline-first di bagian 8 — akun cuma dibutuhkan begitu pengguna ingin mengaktifkan sinkronisasi antar perangkat.
 - Transaksi yang dicatat saat offline tetap tersimpan di penyimpanan lokal perangkat.
 - Saat koneksi internet kembali tersedia, data yang tertunda (pending) otomatis diunggah ke server di background tanpa perlu aksi manual.
 - Setiap transaksi memiliki status sinkronisasi: Tersinkron, Menunggu, atau Gagal, yang ditampilkan pada UI.
@@ -163,7 +163,7 @@ Aplikasi bersifat offline-first: seluruh pencatatan tetap bisa dilakukan tanpa k
 
 - Pengguna dapat mengaktifkan kunci aplikasi berupa PIN 6 digit atau sidik jari/Face ID, agar data keuangan keluarga tidak mudah dilihat orang lain saat HP dipegang bergantian dengan anak atau anggota keluarga lain.
 - Kunci aplikasi bersifat opsional dan terpisah dari kunci layar HP itu sendiri.
-- Jika lupa PIN, pengguna dapat mengatur ulang melalui verifikasi akun (nomor HP + OTP).
+- Jika lupa PIN dan sudah login dengan akun Google, pengguna dapat mengatur ulang lewat verifikasi akun Google-nya (menggantikan rencana verifikasi nomor HP + OTP di draft sebelumnya). Jika belum pernah login, tidak ada jalur reset selain menghapus data aplikasi.
 
 ## 5. Struktur Data
 
@@ -263,8 +263,8 @@ Catatan: mata uang tidak menjadi bagian dari pengaturan karena aplikasi selalu m
 ### 6.1 Alur Onboarding & Login
 
 1. Pengguna membuka aplikasi pertama kali dan disambut 2-3 layar perkenalan singkat dengan ilustrasi hangat bertema keluarga.
-2. Pengguna login/daftar dengan memasukkan nomor HP, lalu memverifikasi kode OTP yang dikirim lewat SMS.
-3. Aplikasi memandu membuat dompet pertama (contoh: "Dompet Tunai") dan menampilkan kategori bawaan yang bisa langsung dipakai atau disesuaikan.
+2. Aplikasi memandu membuat dompet pertama (contoh: "Dompet Tunai") dan menampilkan kategori bawaan yang bisa langsung dipakai atau disesuaikan — tanpa perlu login dulu, sesuai prinsip offline-first (bagian 8). Pengguna bisa langsung mencatat transaksi pertamanya tanpa akun sama sekali.
+3. "Masuk dengan Google" ditawarkan sebagai langkah opsional (di onboarding maupun belakangan lewat Pengaturan) begitu pengguna ingin mengaktifkan sinkronisasi antar perangkat (bagian 4.10) — bukan lagi nomor HP + OTP seperti draft sebelumnya.
 4. Pengguna ditawarkan mengaktifkan kunci aplikasi (PIN/biometric); langkah ini dapat dilewati dan diaktifkan belakangan lewat Pengaturan.
 5. Pengguna diarahkan ke Beranda dan dapat langsung mencatat transaksi pertama.
 
@@ -312,8 +312,8 @@ Catatan: mata uang tidak menjadi bagian dari pengaturan karena aplikasi selalu m
 ### 7.1 Onboarding & Login
 
 - Slide perkenalan singkat dengan ilustrasi hangat bertema keluarga/rumah tangga.
-- Form login: input nomor HP, tombol kirim OTP, input kode OTP.
-- Wizard singkat membuat dompet pertama dan memilih kategori awal.
+- Wizard singkat membuat dompet pertama dan memilih kategori awal (tanpa login).
+- Satu tombol "Masuk dengan Google" opsional — tidak ada form nomor HP/OTP.
 
 ### 7.2 Beranda
 
@@ -346,14 +346,14 @@ Catatan: mata uang tidak menjadi bagian dari pengaturan karena aplikasi selalu m
 - Menu Backup & Restore.
 - Pengaturan kategori dan anggaran, termasuk pemilihan ikon (sistem/emoji/foto), mode reset periode (Bulanan/Mingguan/Event), dan tombol reset manual per kategori anggaran.
 - Pengaturan transaksi berulang (recurring).
-- Info akun (nomor HP) dan status login untuk sinkronisasi antar perangkat.
+- Info akun (nama & email Google) dan status login/tombol "Masuk dengan Google"/"Keluar" untuk sinkronisasi antar perangkat.
 
 ## 8. Kebutuhan Non-Fungsional
 
 - Aplikasi bersifat offline-first: seluruh pencatatan harian tetap berfungsi penuh tanpa koneksi internet.
 - Waktu buka aplikasi dan simpan transaksi harus terasa instan (di bawah 1 detik), tidak menunggu proses sinkronisasi.
 - Perpindahan tema light/dark maupun background tidak memerlukan restart aplikasi.
-- Data yang dikirim ke server terenkripsi dalam perjalanan (HTTPS/TLS), dan data sensitif (termasuk kredensial OTP) tidak disimpan dalam bentuk teks biasa di server.
+- Data yang dikirim ke server terenkripsi dalam perjalanan (HTTPS/TLS); server tidak pernah menyimpan password (login Google tidak melibatkan password sama sekali di sisi aplikasi).
 - Sinkronisasi data ke server tidak boleh menyebabkan duplikasi maupun kehilangan transaksi, termasuk saat koneksi terputus di tengah proses.
 - Perhitungan saldo, anggaran, dan rangkuman harus konsisten walau ada edit/hapus transaksi lama, baik secara lokal maupun setelah sinkronisasi.
 - Tampilan tetap ramah dan mudah dibaca untuk pengguna dengan beragam tingkat kemahiran teknologi: ukuran teks cukup besar, kontras warna tetap terjaga meski memakai palet pastel.
@@ -363,7 +363,7 @@ Catatan: mata uang tidak menjadi bagian dari pengaturan karena aplikasi selalu m
 
 - Versi awal aplikasi menyasar platform Android terlebih dahulu; dukungan iOS dipertimbangkan sebagai pengembangan lanjutan.
 - Satu akun digunakan oleh satu pengguna utama. Fitur berbagi akses dompet antar anggota keluarga (family sharing, misalnya suami-istri mengakses data yang sama) belum termasuk dalam versi ini dan dapat dipertimbangkan pada pengembangan lanjutan.
-- Login menggunakan nomor HP dan kode OTP; belum menyediakan login via email/password atau akun pihak ketiga (Google/Facebook) pada versi awal.
+- Login menggunakan akun Google saja ("Masuk dengan Google"), dan bersifat opsional — bukan lagi nomor HP + OTP seperti draft sebelumnya (keputusan produk; lihat 4.10/6.1). Belum menyediakan login via email/password manual atau provider pihak ketiga lain (Facebook, dst).
 - Aplikasi tidak mencakup fitur investasi, utang-piutang, atau perencanaan keuangan lanjutan (financial planning); fokus versi ini adalah pencatatan, anggaran sederhana, dan rangkuman transaksi harian.
 - Backup manual mengandalkan akun Google Drive pengguna; penyediaan penyimpanan cloud sendiri di luar itu berada di luar cakupan versi ini.
 - Anggaran mendukung tiga mode reset (kalender Bulanan/Mingguan, berbasis kategori pemasukan pemicu/Event, dan manual lewat tombol), tapi versi awal belum mendukung rollover sisa/defisit anggaran ke periode berikutnya — dapat dipertimbangkan pada pengembangan lanjutan.
@@ -380,7 +380,7 @@ Dukungan banyak dompet, fitur pindah uang antar dompet, anggaran per kategori be
 Backup manual satu-tombol ke Google Drive, kunci aplikasi (PIN/biometric), alur onboarding lengkap.
 
 **Tahap 4 — Online & Sinkronisasi Multi-Perangkat**
-Login nomor HP + OTP, penyimpanan offline-first, sinkronisasi otomatis saat online, indikator status sinkronisasi, soft delete untuk keamanan sinkronisasi.
+Login dengan akun Google (opsional), penyimpanan offline-first, sinkronisasi otomatis saat online, indikator status sinkronisasi, soft delete untuk keamanan sinkronisasi.
 
 **Tahap 5 — Visualisasi & Personalisasi Lanjutan**
 Grafik tambahan (perbandingan saldo antar dompet), filter transaksi lanjutan, dark mode, pilihan background/wallpaper, ikon emoji & upload foto.

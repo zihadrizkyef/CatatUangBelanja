@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/transaction.dart';
 import '../repositories/finance_repository.dart';
+import '../services/sync_service.dart';
 import '../utils/relative_date.dart';
 import 'all_transactions_screen.dart';
 import 'budget_screen.dart';
@@ -45,18 +46,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Segera hadir ✨'),
-        duration: Duration(milliseconds: 1200),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final repository = context.watch<FinanceRepository>();
+    final syncService = context.watch<SyncService>();
 
     final budgetStatuses = repository.budgetStatuses;
     final topWarning = budgetStatuses.where((b) => b.pct >= 80).firstOrNull;
@@ -81,7 +74,8 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () => _editTransaction(t),
           ),
       ],
-      onTapSync: _showComingSoon,
+      syncState: syncService.state,
+      onTapSync: syncService.syncNow,
       onOpenBudget: _openBudgetScreen,
       onSeeAllTransactions: _openAllTransactions,
     );

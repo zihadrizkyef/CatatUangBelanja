@@ -7,6 +7,11 @@ class AppIcons {
 
   static const String _base = 'assets/icons/openmoji';
 
+  /// Hand-drawn originals in the same flat/line-art style, for cases with no
+  /// matching bundled OpenMoji asset (see pubspec.yaml's assets comment) —
+  /// not CC BY-SA/OpenMoji, no NOTICE.md entry needed.
+  static const String _customBase = 'assets/icons/custom';
+
   static const String home = '$_base/house.svg';
   static const String wallet = '$_base/purse.svg';
   static const String summary = '$_base/bar_chart.svg';
@@ -34,10 +39,10 @@ class AppIcons {
   static const String profileAvatar = '$_base/woman.svg';
   static const String darkMode = '$_base/crescent_moon.svg';
   static const String security = '$_base/lock.svg';
+  static const String biometric = '$_customBase/fingerprint.svg';
   static const String profile = '$_base/bust_in_silhouette.svg';
   static const String notification = '$_base/bell.svg';
   static const String categoryBudgetSetting = '$_base/label.svg';
-  static const String language = '$_base/globe.svg';
   static const String help = '$_base/speech_balloon.svg';
   static const String about = '$_base/information.svg';
   static const String magic = '$_base/sparkles.svg';
@@ -97,4 +102,10 @@ class AppIcons {
   };
 
   static List<String> get walletIconChoices => walletIconColors.keys.toList();
+
+  /// Icon choices offered by Profil's avatar picker. Reuses the two bundled
+  /// bust/person OpenMoji assets already used elsewhere (`profileAvatar`,
+  /// `profile`) plus one custom original, since no wider bundled "person"
+  /// icon set exists yet.
+  static const List<String> avatarIconChoices = [profileAvatar, profile, '$_customBase/avatar_person.svg'];
 }
