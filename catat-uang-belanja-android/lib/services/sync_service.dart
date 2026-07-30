@@ -62,6 +62,11 @@ class SyncService extends ChangeNotifier {
     'categories': ['is_system'],
     'transactions': ['is_deleted'],
   };
+  static const _dateColumnsByTable = {
+    'wallets': ['created_at'],
+    'transactions': ['date_time', 'created_at', 'updated_at'],
+    'budgets': ['current_period_started_at', 'created_at', 'updated_at'],
+  };
 
   SyncState _state = SyncState.idle;
   SyncState get state => _state;
@@ -95,10 +100,10 @@ class SyncService extends ChangeNotifier {
           .toList();
 
       await _apiClient.push(token, {
-        'wallets': _repository.wallets.map((w) => w.toMap()).toList(),
-        'categories': _repository.categories.map((c) => c.toMap()).toList(),
-        'budgets': _repository.budgets.map((b) => b.toMap()).toList(),
-        'transactions': pendingTransactions.map((t) => t.toMap()).toList(),
+        'wallets': _repository.wallets.map((w) => _toWireFormat('wallets', w.toMap())).toList(),
+        'categories': _repository.categories.map((c) => _toWireFormat('categories', c.toMap())).toList(),
+        'budgets': _repository.budgets.map((b) => _toWireFormat('budgets', b.toMap())).toList(),
+        'transactions': pendingTransactions.map((t) => _toWireFormat('transactions', t.toMap())).toList(),
       });
       await _markSynced(pendingTransactions.map((t) => t.id));
 
@@ -145,6 +150,25 @@ class SyncService extends ChangeNotifier {
         entry.key: boolColumns.contains(entry.key) && entry.value is bool
             ? ((entry.value as bool) ? 1 : 0)
             : entry.value,
+    };
+  }
+
+  /// Converts a [toMap] row — SQLite-oriented (booleans as 0/1 ints, dates
+  /// as `DateTime.toIso8601String()`, which omits the UTC "Z" suffix for a
+  /// local-time value) — into the backend's wire format (real JSON
+  /// booleans, UTC ISO-8601 datetimes per doc 4.10's zod schemas). The
+  /// inverse of [_boolsToInts], plus a date fixup [_applyPulled] doesn't
+  /// need since pulled datetimes already arrive UTC-formatted.
+  Map<String, Object?> _toWireFormat(String table, Map<String, Object?> row) {
+    final boolColumns = _boolColumnsByTable[table] ?? const [];
+    final dateColumns = _dateColumnsByTable[table] ?? const [];
+    return {
+      for (final entry in row.entries)
+        entry.key: boolColumns.contains(entry.key) && entry.value is int
+            ? (entry.value as int) == 1
+            : dateColumns.contains(entry.key) && entry.value is String
+                ? DateTime.parse(entry.value as String).toUtc().toIso8601String()
+                : entry.value,
     };
   }
 
