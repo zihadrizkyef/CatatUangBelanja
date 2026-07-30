@@ -47,6 +47,14 @@ class SyncService extends ChangeNotifier {
       // widget test that builds the provider tree.
       onError: (_) {},
     );
+    // Local writes (add/edit/delete transaction, wallet/category/budget
+    // CRUD, ...) only ever went through connectivity-change or post-login
+    // triggers, so the sync badge kept showing a stale "Tersinkron" from
+    // the *previous* cycle for as long as no such event happened to fire —
+    // silently leaving freshly-created data unsynced with no visible sign
+    // of it. Debounced so a burst of writes (e.g. dummy-data generation)
+    // triggers one sync instead of one per row.
+    _repository.addListener(_scheduleSyncAfterLocalChange);
   }
 
   final FinanceRepository _repository;
@@ -55,6 +63,17 @@ class SyncService extends ChangeNotifier {
   final AppDatabase _appDatabase;
   final Connectivity _connectivity;
   late final StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
+  Timer? _debounceTimer;
+
+  void _scheduleSyncAfterLocalChange() {
+    // Ignore the repository's own notifyListeners() from syncNow()'s
+    // `_repository.load()` reload at the end of a sync already in
+    // progress — otherwise every sync would immediately re-schedule
+    // another one.
+    if (_state == SyncState.syncing) return;
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 1500), syncNow);
+  }
 
   static const _cursorKey = 'last_sync_cursor';
   static const _boolColumnsByTable = {
@@ -191,6 +210,8 @@ class SyncService extends ChangeNotifier {
   @override
   void dispose() {
     _connectivitySubscription.cancel();
+    _debounceTimer?.cancel();
+    _repository.removeListener(_scheduleSyncAfterLocalChange);
     super.dispose();
   }
 }
