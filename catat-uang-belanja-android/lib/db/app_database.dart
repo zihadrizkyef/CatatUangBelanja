@@ -27,7 +27,23 @@ class AppDatabase {
   factory AppDatabase.forTesting(String dbName) => AppDatabase._(dbName: dbName);
 
   static const _defaultDbName = 'catat_uang_belanja.db';
-  static const _dbVersion = 3;
+  static const _dbVersion = 4;
+
+  /// Fixed namespace for deriving stable, deterministic IDs (UUID v5) for
+  /// system wallets/categories from their `iconValue` key — see
+  /// [_systemId]. Any valid UUID works as a v5 namespace; this one is just
+  /// arbitrary and specific to this app.
+  static const _systemIdNamespace = 'a3b6e9f0-9b1a-4e3a-8b0e-6f7c9d2a1b4c';
+
+  /// A system wallet/category (e.g. "Belanja Dapur") must resolve to the
+  /// *same* id every time it's seeded — on first install, after "Hapus
+  /// Semua Data", and on every other device/reinstall — otherwise
+  /// [SyncService]'s push-in-full-each-time strategy treats each reseed as
+  /// brand new rows and duplicates pile up both locally (via pull) and on
+  /// the backend. `uuid.v4()` (random) can't guarantee that; a name-based
+  /// v5 UUID keyed on the already-unique `iconValue` can.
+  static String _systemId(String iconValue) =>
+      const Uuid().v5(_systemIdNamespace, iconValue);
 
   final String _dbName;
 
@@ -136,6 +152,76 @@ class AppDatabase {
       final startOfMonth = DateTime(now.year, now.month, 1).toIso8601String();
       await db.update('budgets', {'reset_anchor': 1, 'current_period_started_at': startOfMonth});
     }
+    if (oldVersion < 4) {
+      await _dedupeSystemEntities(db, 'wallets', _systemWalletIconValues, [
+        'transactions.wallet_id',
+        'transactions.target_wallet_id',
+      ]);
+      await _dedupeSystemEntities(db, 'categories', _systemCategoryIconValues, [
+        'transactions.category_id',
+        'budgets.category_id',
+        'budgets.trigger_category_id',
+      ]);
+    }
+  }
+
+  static const _systemWalletIconValues = ['wallet_cash', 'wallet_bank', 'wallet_ewallet', 'wallet_savings'];
+  static const _systemCategoryIconValues = [
+    'category_kitchen',
+    'category_kids_snack',
+    'category_school',
+    'category_arisan',
+    'category_bills',
+    'category_health',
+    'category_transport',
+    'category_entertainment',
+    'category_salary',
+    'category_allowance',
+    'category_side_business',
+    'category_bonus',
+    'category_other',
+  ];
+
+  /// Migration for the switch from random (`uuid.v4()`) to deterministic
+  /// (`_systemId`, keyed on `icon_value`) ids for system wallets/categories
+  /// (doc 2.7) — see [_systemId] for why. Existing installs may have
+  /// accumulated duplicate rows per `icon_value` from repeated reseeds
+  /// (fresh install, "Hapus Semua Data") each generating a new random id
+  /// that a full-state sync push then re-uploaded as a "new" entity. This
+  /// collapses every row sharing an `icon_value` in [table] down to one,
+  /// repointing the given `table.column` foreign-key references (e.g.
+  /// `transactions.wallet_id`) from the removed duplicates to the survivor,
+  /// which is re-keyed to the new deterministic id so this device's rows
+  /// match what every other device/reseed will compute from now on.
+  Future<void> _dedupeSystemEntities(
+    Database db,
+    String table,
+    List<String> iconValues,
+    List<String> referencingColumns,
+  ) async {
+    for (final iconValue in iconValues) {
+      final rows = await db.query(table, where: 'icon_value = ?', whereArgs: [iconValue]);
+      if (rows.isEmpty) continue;
+
+      final canonicalId = _systemId(iconValue);
+      final staleIds = [for (final row in rows) row['id'] as String].where((id) => id != canonicalId);
+
+      for (final staleId in staleIds) {
+        for (final referencingColumn in referencingColumns) {
+          final parts = referencingColumn.split('.');
+          await db.update(
+            parts[0],
+            {parts[1]: canonicalId},
+            where: '${parts[1]} = ?',
+            whereArgs: [staleId],
+          );
+        }
+      }
+
+      final representative = Map<String, Object?>.from(rows.first)..['id'] = canonicalId;
+      await db.delete(table, where: 'icon_value = ?', whereArgs: [iconValue]);
+      await db.insert(table, representative);
+    }
   }
 
   /// Simple key-value store for app-wide preferences (e.g. `theme_mode`) that
@@ -179,21 +265,20 @@ class AppDatabase {
   }
 
   Future<void> _seed(DatabaseExecutor db) async {
-    const uuid = Uuid();
     final now = DateTime.now();
 
-    for (final wallet in _systemWallets(uuid, now)) {
+    for (final wallet in _systemWallets(now)) {
       await db.insert('wallets', wallet.toMap());
     }
 
-    for (final category in _systemCategories(uuid)) {
+    for (final category in _systemCategories()) {
       await db.insert('categories', category.toMap());
     }
   }
 
   /// Default multi-wallet starter set (doc 4.2 examples) so a new user sees
   /// more than just cash on first run.
-  List<Wallet> _systemWallets(Uuid uuid, DateTime now) {
+  List<Wallet> _systemWallets(DateTime now) {
     const wallets = [
       ('Dompet Tunai', WalletType.cash, 'wallet_cash', '#F7C6D9'),
       ('Rekening Bank', WalletType.bank, 'wallet_bank', '#DCD3F0'),
@@ -204,7 +289,7 @@ class AppDatabase {
     return [
       for (final (name, type, iconValue, color) in wallets)
         Wallet(
-          id: uuid.v4(),
+          id: _systemId(iconValue),
           name: name,
           type: type,
           color: color,
@@ -216,7 +301,7 @@ class AppDatabase {
   }
 
   /// Household categories per doc 2.7.
-  List<Category> _systemCategories(Uuid uuid) {
+  List<Category> _systemCategories() {
     const expenseCategories = [
       ('Belanja Dapur', 'category_kitchen', '#FBD8B5'),
       ('Jajan Anak', 'category_kids_snack', '#F7C6D9'),
@@ -238,7 +323,7 @@ class AppDatabase {
     return [
       for (final (name, iconValue, color) in expenseCategories)
         Category(
-          id: uuid.v4(),
+          id: _systemId(iconValue),
           name: name,
           type: CategoryType.expense,
           color: color,
@@ -248,7 +333,7 @@ class AppDatabase {
         ),
       for (final (name, iconValue, color) in incomeCategories)
         Category(
-          id: uuid.v4(),
+          id: _systemId(iconValue),
           name: name,
           type: CategoryType.income,
           color: color,
