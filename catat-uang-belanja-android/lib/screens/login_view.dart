@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../widgets/google_sign_in_button.dart';
+import '../widgets/google_sign_in_web_button.dart';
 import '../widgets/openmoji_icon.dart';
 
 /// Pure layout for [LoginScreen]: warm welcome copy + a single "Masuk
@@ -49,7 +51,12 @@ class LoginView extends StatelessWidget {
                 style: AppTheme.body(fontSize: 13, color: palette.textSecondary),
               ),
               const SizedBox(height: 32),
-              GoogleSignInButton(isLoading: isSigningIn, onTap: isSigningIn ? null : onTapGoogleSignIn),
+              // Web can't trigger sign-in from a custom button — Google
+              // requires their own rendered widget there (doc 4.10).
+              if (kIsWeb)
+                SizedBox(width: double.infinity, height: 48, child: renderGoogleSignInWebButton())
+              else
+                GoogleSignInButton(isLoading: isSigningIn, onTap: isSigningIn ? null : onTapGoogleSignIn),
               if (errorText != null) ...[
                 const SizedBox(height: 12),
                 Text(

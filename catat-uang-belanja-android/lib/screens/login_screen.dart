@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
@@ -30,15 +31,47 @@ class _LoginScreenState extends State<LoginScreen> {
   late final AuthService _authService = widget.authService ?? AuthService();
   bool _isSigningIn = false;
   String? _errorText;
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _authEventsSubscription;
 
-  Future<void> _signIn() async {
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      // Web can't trigger sign-in from our own button (authenticate()
+      // throws there) — LoginView renders Google's own button instead,
+      // whose result arrives through this stream rather than a return
+      // value. Pre-initializing here (rather than waiting for a tap) lets
+      // that button render as soon as the SDK is ready.
+      unawaited(_authService.ensureInitialized());
+      _authEventsSubscription = _authService.authenticationEvents.listen(_onWebAuthEvent);
+    }
+  }
+
+  @override
+  void dispose() {
+    _authEventsSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _onWebAuthEvent(GoogleSignInAuthenticationEvent event) {
+    if (event is GoogleSignInAuthenticationEventSignIn) {
+      unawaited(_handleSignIn(() => _authService.completeSignIn(event.user)));
+    }
+  }
+
+  Future<void> _signIn() => _handleSignIn(_authService.signIn);
+
+  /// Shared tail for both entry points: [_signIn] (mobile, driven by our
+  /// own button tap) and [_onWebAuthEvent] (web, driven by Google's button
+  /// reporting a result asynchronously).
+  Future<void> _handleSignIn(Future<AuthUser> Function() run) async {
     setState(() {
       _isSigningIn = true;
       _errorText = null;
     });
 
     try {
-      await _authService.signIn();
+      await run();
       if (!mounted) return;
       await context.read<FinanceRepository>().refreshLoginState();
       if (!mounted) return;

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../config.dart';
@@ -67,15 +68,43 @@ class AuthService {
 
   Future<bool> get isLoggedIn async => await sessionToken != null;
 
+  // Memoized: the web plugin throws StateError if init() runs more than
+  // once, and LoginScreen needs to trigger this early (before the GIS
+  // button can render) as well as signIn() calling it again.
+  Future<void>? _initializeFuture;
+
+  /// Loads/initializes the Google Sign-In SDK. Safe to call multiple times
+  /// (and from multiple places) — only the first call actually initializes.
+  Future<void> ensureInitialized() {
+    return _initializeFuture ??= _googleSignIn.initialize(
+      // The web plugin rejects serverClientId outright — on web the client
+      // ID can only come from the <meta name="google-signin-client_id">
+      // tag in web/index.html.
+      serverClientId: kIsWeb || googleServerClientId.isEmpty ? null : googleServerClientId,
+    );
+  }
+
+  /// Sign-in results on web arrive through this stream (triggered by
+  /// Google's own rendered button, see [LoginView]) rather than as a return
+  /// value — web's `authenticate()` always throws.
+  Stream<GoogleSignInAuthenticationEvent> get authenticationEvents => _googleSignIn.authenticationEvents;
+
   /// Runs the Google account picker, exchanges the resulting ID token for a
   /// backend session, and persists both. Throws [ApiException] if the
   /// backend rejects the token, or the underlying `google_sign_in` exception
-  /// if the user cancels or the platform call fails.
+  /// if the user cancels or the platform call fails. Not supported on web —
+  /// use [authenticationEvents] + [completeSignIn] there instead.
   Future<AuthUser> signIn() async {
-    await _googleSignIn.initialize(
-      serverClientId: googleServerClientId.isEmpty ? null : googleServerClientId,
-    );
+    await ensureInitialized();
     final account = await _googleSignIn.authenticate();
+    return completeSignIn(account);
+  }
+
+  /// Finishes signing in for an already-authenticated Google [account]:
+  /// exchanges its ID token for a backend session and persists both. This
+  /// is the tail shared by [signIn] (mobile) and the [authenticationEvents]
+  /// listener (web, since the GIS button authenticates on its own).
+  Future<AuthUser> completeSignIn(GoogleSignInAccount account) async {
     final idToken = account.authentication.idToken;
     if (idToken == null) {
       throw ApiException(401, 'Google tidak mengembalikan token — coba lagi, Bun.');
