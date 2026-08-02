@@ -1,8 +1,0 @@
-appId: com.catatuangbelanja.catat_uang_belanja
----
-- launchApp
-- tapOn: "Beranda"
-- tapOn:
-    point: "964,1962"
-- waitForAnimationToEnd
-- takeScreenshot: qa-explore-02-tx-sheet

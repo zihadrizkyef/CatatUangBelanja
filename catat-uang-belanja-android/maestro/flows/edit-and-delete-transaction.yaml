@@ -1,0 +1,45 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Add an expense, edit its amount from the Beranda row, then delete it
+# (via the confirm-delete dialog) and confirm the empty state comes back.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Beranda"
+- waitForAnimationToEnd
+- tapOn: "+"
+- waitForAnimationToEnd
+- tapOn: "4"
+- tapOn: "5"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "Belanja Dapur"
+- tapOn: "✓"
+- waitForAnimationToEnd
+- tapOn: "Belanja Dapur"
+- waitForAnimationToEnd
+- takeScreenshot: edit-tx-01-edit-sheet-open
+- tapOn: "⌫"
+- tapOn: "⌫"
+- tapOn: "⌫"
+- tapOn: "⌫"
+- tapOn: "⌫"
+- tapOn: "6"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "✓"
+- waitForAnimationToEnd
+- takeScreenshot: edit-tx-02-beranda-after-edit
+- tapOn: "Belanja Dapur"
+- waitForAnimationToEnd
+- tapOn: "Hapus Transaksi"
+- waitForAnimationToEnd
+- tapOn: "Ya, Hapus"
+- waitForAnimationToEnd
+- takeScreenshot: edit-tx-03-beranda-after-delete

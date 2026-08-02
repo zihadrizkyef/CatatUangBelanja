@@ -1,0 +1,31 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Toggle dark mode from Pengaturan and confirm it applies across tabs.
+#
+# NOTE: the Switch itself has no accessible text, so it's tapped by
+# screen-percentage point (85%,37%), confirmed from several past live QA
+# runs of the "Mode Gelap" row.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd
+- tapOn:
+    point: "85%,37%"
+- waitForAnimationToEnd
+- takeScreenshot: darkmode-01-pengaturan-dark
+- tapOn: "Beranda"
+- waitForAnimationToEnd
+- takeScreenshot: darkmode-02-beranda-dark
+- tapOn: "Dompet"
+- waitForAnimationToEnd
+- takeScreenshot: darkmode-03-dompet-dark
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd
+- tapOn:
+    point: "85%,37%"
+- waitForAnimationToEnd
+- takeScreenshot: darkmode-04-pengaturan-light-again

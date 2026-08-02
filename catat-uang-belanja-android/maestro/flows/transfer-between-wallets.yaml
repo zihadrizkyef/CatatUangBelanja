@@ -1,0 +1,52 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Give the default wallet some balance, add a second wallet (unlocks the
+# "Transfer" action, which only shows with 2+ wallets), transfer between
+# them, and confirm Beranda's "Transaksi Terbaru" shows the transfer
+# correctly — this is the exact scenario historically broken by QA-001
+# (mislabeled as generic "Pengeluaran") and QA-002 (dangling "· " in the
+# sub-label), both now fixed; keep this flow as a guard against regressing.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Beranda"
+- waitForAnimationToEnd
+- tapOn: "+"
+- waitForAnimationToEnd
+- tapOn: "Pemasukan"
+- tapOn: "5"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "Gaji"
+- tapOn: "✓"
+- waitForAnimationToEnd
+- tapOn: "Dompet"
+- waitForAnimationToEnd
+- tapOn:
+    point: "90%,26%"
+- waitForAnimationToEnd
+- tapOn: "Nama dompet"
+- inputText: "Rekening Uji Regresi"
+- tapOn: "Simpan"
+- waitForAnimationToEnd
+- tapOn: "Transfer"
+- waitForAnimationToEnd
+- tapOn: "2"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- takeScreenshot: transfer-01-sheet-filled
+- tapOn: "✓"
+- waitForAnimationToEnd
+- takeScreenshot: transfer-02-dompet-after
+- tapOn: "Beranda"
+- waitForAnimationToEnd
+- takeScreenshot: transfer-03-beranda-transfer-row

@@ -1,0 +1,27 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# "Hapus Semua Data" wipes everything and returns the app to its
+# empty/seeded state, with a success snackbar.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd
+- tapOn: "Generate Data Dummy"
+- waitForAnimationToEnd
+- tapOn: "Ya, Isi"
+- waitForAnimationToEnd
+- tapOn: "Hapus Semua Data"
+- waitForAnimationToEnd
+- tapOn: "Ya, Hapus"
+- waitForAnimationToEnd
+- takeScreenshot: cleardata-01-settings-after
+- tapOn: "Beranda"
+- waitForAnimationToEnd
+- takeScreenshot: cleardata-02-beranda-empty
+- tapOn: "Dompet"
+- waitForAnimationToEnd
+- takeScreenshot: cleardata-03-dompet-empty

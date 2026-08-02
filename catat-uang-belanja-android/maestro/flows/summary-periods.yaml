@@ -1,0 +1,33 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Rangkuman's period selector (Harian/Mingguan/Bulanan/Tahunan) switches
+# the whole screen's data without crashing, on both an empty and a
+# populated dataset.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Rangkuman"
+- waitForAnimationToEnd
+- tapOn: "Harian"
+- waitForAnimationToEnd
+- takeScreenshot: summary-01-harian-kosong
+- tapOn: "Mingguan"
+- waitForAnimationToEnd
+- takeScreenshot: summary-02-mingguan-kosong
+- tapOn: "Tahunan"
+- waitForAnimationToEnd
+- takeScreenshot: summary-03-tahunan-kosong
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd
+- tapOn: "Generate Data Dummy"
+- waitForAnimationToEnd
+- tapOn: "Ya, Isi"
+- waitForAnimationToEnd
+- tapOn: "Rangkuman"
+- waitForAnimationToEnd
+- tapOn: "Bulanan"
+- waitForAnimationToEnd
+- takeScreenshot: summary-04-bulanan-dengan-data

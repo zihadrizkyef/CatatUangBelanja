@@ -1,0 +1,25 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# "Generate Data Dummy" seeds sample wallets/budgets/~3 months of
+# transactions and shows a success snackbar — this is also the exact
+# scenario historically broken by QA-006 (silent failure when no cash
+# wallet existed), now fixed with an auto-created fallback cash wallet.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd
+- tapOn: "Generate Data Dummy"
+- waitForAnimationToEnd
+- tapOn: "Ya, Isi"
+- waitForAnimationToEnd
+- takeScreenshot: dummy-01-settings-after
+- tapOn: "Beranda"
+- waitForAnimationToEnd
+- takeScreenshot: dummy-02-beranda-with-data
+- tapOn: "Dompet"
+- waitForAnimationToEnd
+- takeScreenshot: dummy-03-dompet-with-data

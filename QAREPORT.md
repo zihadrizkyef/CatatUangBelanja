@@ -13,6 +13,8 @@ Status live semua agent ada di [AGENT_STATUS.md](AGENT_STATUS.md).
 
 ---
 
+**Catatan (2026-07-31):** flow Maestro per-bug lama di `maestro/flows/qa-*.yaml` yang direferensikan di bawah sudah dihapus dan digantikan oleh regression suite baru di `maestro/flows/` (lihat `maestro/README.md`) — link "Maestro flow" di item-item di bawah sekarang jadi riwayat historis saja, bukan file yang masih ada.
+
 ## Open Items
 
 <!-- Contoh format, hapus komentar ini saat menambah item pertama:
@@ -51,7 +53,7 @@ Status live semua agent ada di [AGENT_STATUS.md](AGENT_STATUS.md).
   2. Lihat kartu "Transaksi Terbaru" di Beranda, baris "Transfer ke Rekening Bank".
 - Expected: Sub-label di bawah label baris menampilkan "Hari ini" saja (tidak ada catatan/note untuk transaksi ini), sama seperti pola di `transaction_history_row.dart` yang men-skip bagian kosong sebelum digabung dengan " · ".
 - Actual: Sub-label menampilkan "· Hari ini" — ada tanda titik-tengah (·) menggantung di depan tanpa teks sebelumnya, karena `sub` kosong untuk transfer tapi tetap digabung unconditional lewat `'$sub · $relativeDate'`. Root cause: `lib/widgets/home_transaction_row.dart` baris 75 men-string-interpolate `$sub · $relativeDate` langsung tanpa cek `sub.isEmpty` dulu — beda dengan `transaction_history_row.dart` baris 58-59 yang sudah benar pakai `[sub, relativeDate ?? ''].where((s) => s.isNotEmpty).join(' · ')`. Kemungkinan besar regresi dari fix QA-001 (baris `sub` sekarang bisa kosong untuk transfer, tapi baris gabung teksnya belum diupdate mengikuti pola yang sama).
-- Maestro flow: maestro/flows/qa-001-repro.yaml (screenshot yang sama juga menunjukkan bug ini)
+- Maestro flow: maestro/flows/qa-001-repro.yaml (screenshot yang sama juga menunjukkan bug ini) — dihapus, lihat catatan di atas
 - Fixed by: Programmer, 2026-07-25 01:14 — `lib/widgets/home_transaction_row.dart` sub-label now built with `[sub, relativeDate].where((s) => s.isNotEmpty).join(' · ')` instead of unconditional `'$sub · $relativeDate'`, same pattern as `transaction_history_row.dart`. `flutter analyze` clean. Not rebuilding/reinstalling on-device myself this time since QA is actively driving the emulator on Wallet CRUD — will be picked up on QA's next rebuild.
 
 ### QA-003 — [FIXED] [High]

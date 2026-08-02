@@ -1,6 +1,0 @@
-appId: com.catatuangbelanja.catat_uang_belanja
----
-- launchApp
-- tapOn: "Rangkuman"
-- waitForAnimationToEnd
-- takeScreenshot: qa-summary-01

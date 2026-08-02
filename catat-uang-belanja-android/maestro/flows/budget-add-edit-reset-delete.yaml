@@ -1,0 +1,40 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Anggaran CRUD: add a monthly budget for a seeded category, reset it,
+# then delete it (via the confirm-delete dialog). Reached through
+# Pengaturan > "Anggaran".
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd
+- tapOn: "Anggaran"
+- waitForAnimationToEnd
+- tapOn: "+ Tambah Anggaran"
+- waitForAnimationToEnd
+- tapOn: "Jajan Anak"
+- tapOn: "5"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "✓"
+- waitForAnimationToEnd
+- takeScreenshot: budget-crud-01-after-add
+- tapOn: "Jajan Anak"
+- waitForAnimationToEnd
+- takeScreenshot: budget-crud-02-edit-sheet
+- tapOn: "↻ Reset Sekarang"
+- waitForAnimationToEnd
+- takeScreenshot: budget-crud-03-after-reset
+- tapOn: "Jajan Anak"
+- waitForAnimationToEnd
+- tapOn: "Hapus Anggaran"
+- waitForAnimationToEnd
+- tapOn: "Ya, Hapus"
+- waitForAnimationToEnd
+- takeScreenshot: budget-crud-04-after-delete

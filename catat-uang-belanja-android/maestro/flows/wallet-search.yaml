@@ -1,0 +1,18 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Dompet's search field filters the wallet list, and shows "Dompet tidak
+# ditemukan" when nothing matches.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Dompet"
+- waitForAnimationToEnd
+- tapOn: "Cari dompet…"
+- inputText: "tunai"
+- takeScreenshot: wallet-search-01-match
+- eraseText: 10
+- inputText: "zzz_tidak_ada"
+- takeScreenshot: wallet-search-02-no-match

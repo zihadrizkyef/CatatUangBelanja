@@ -1,4 +1,20 @@
 appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
 ---
-- launchApp
-- takeScreenshot: smoke-01-launch
+# Basic sanity check: app launches and all 4 bottom-nav tabs open without
+# crashing. Fresh install (clearState) so it also covers the empty-state UI.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- takeScreenshot: smoke-01-beranda
+- tapOn: "Dompet"
+- waitForAnimationToEnd
+- takeScreenshot: smoke-02-dompet
+- tapOn: "Rangkuman"
+- waitForAnimationToEnd
+- takeScreenshot: smoke-03-rangkuman
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd
+- takeScreenshot: smoke-04-pengaturan

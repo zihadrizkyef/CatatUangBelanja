@@ -1,0 +1,26 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Add a Pemasukan (needs the segment switch, unlike expense) using a seeded
+# category, and confirm Total Saldo on Beranda reflects it.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Beranda"
+- waitForAnimationToEnd
+- tapOn: "+"
+- waitForAnimationToEnd
+- tapOn: "Pemasukan"
+- tapOn: "5"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "Gaji"
+- takeScreenshot: add-income-01-sheet-filled
+- tapOn: "✓"
+- waitForAnimationToEnd
+- takeScreenshot: add-income-02-beranda-after-save

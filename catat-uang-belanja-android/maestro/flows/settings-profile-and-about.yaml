@@ -1,0 +1,34 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Edit Profil (rename), open Keamanan (without turning the app-lock
+# toggle on — that would block the rest of the flow behind a PIN), and
+# check the "Tentang Aplikasi" dialog.
+#
+# NOTE: the back chevron on Keamanan (top-left of its header) has no
+# text/semantics label, so it's tapped by screen-percentage point (5%,7%)
+# — a best-effort estimate, nudge it if the tap misses.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd
+- tapOn: "Profil"
+- waitForAnimationToEnd
+- tapOn: "Nama kamu"
+- inputText: "Bunda Uji Regresi"
+- tapOn: "Simpan"
+- waitForAnimationToEnd
+- takeScreenshot: settings-01-profil-after-edit
+- tapOn: "Keamanan"
+- waitForAnimationToEnd
+- takeScreenshot: settings-02-keamanan
+- tapOn:
+    point: "5%,7%"
+- waitForAnimationToEnd
+- tapOn: "Tentang Aplikasi"
+- waitForAnimationToEnd
+- takeScreenshot: settings-03-tentang-aplikasi
+- tapOn: "Tutup"

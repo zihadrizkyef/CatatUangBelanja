@@ -1,0 +1,25 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Add a Pengeluaran (expense stays default-selected — no need to tap the
+# segment) using a seeded category, and confirm it shows up on Beranda's
+# "Transaksi Terbaru" card.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Beranda"
+- waitForAnimationToEnd
+- tapOn: "+"
+- waitForAnimationToEnd
+- tapOn: "4"
+- tapOn: "5"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "Belanja Dapur"
+- takeScreenshot: add-expense-01-sheet-filled
+- tapOn: "✓"
+- waitForAnimationToEnd
+- takeScreenshot: add-expense-02-beranda-after-save

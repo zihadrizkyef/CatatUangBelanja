@@ -1,0 +1,38 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Deleting a wallet that still has transactions must be blocked with a
+# snackbar, not silently allowed — this is the exact scenario historically
+# broken by QA-005 (wallet deleted, transactions left orphaned, Total
+# Saldo and budget progress went out of sync), now fixed with an in-use
+# guard mirroring category deletion. Keep this flow as a guard against
+# regressing.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Beranda"
+- waitForAnimationToEnd
+- tapOn: "+"
+- waitForAnimationToEnd
+- tapOn: "4"
+- tapOn: "5"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "Belanja Dapur"
+- tapOn: "✓"
+- waitForAnimationToEnd
+- tapOn: "Dompet"
+- waitForAnimationToEnd
+- tapOn: "Dompet Tunai"
+- waitForAnimationToEnd
+- tapOn:
+    point: "89%,7%"
+- waitForAnimationToEnd
+- tapOn: "Hapus Dompet"
+- waitForAnimationToEnd
+- tapOn: "Ya, Hapus"
+- waitForAnimationToEnd
+- takeScreenshot: wallet-inuse-01-blocked-snackbar

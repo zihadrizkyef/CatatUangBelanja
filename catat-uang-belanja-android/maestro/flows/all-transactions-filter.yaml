@@ -1,0 +1,31 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Open Semua Transaksi from Beranda's "Lihat semua →" and switch between
+# the Semua/Pengeluaran/Pemasukan type filter chips.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Beranda"
+- waitForAnimationToEnd
+- tapOn: "+"
+- waitForAnimationToEnd
+- tapOn: "4"
+- tapOn: "5"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "0"
+- tapOn: "Belanja Dapur"
+- tapOn: "✓"
+- waitForAnimationToEnd
+- tapOn: "Lihat semua →"
+- waitForAnimationToEnd
+- takeScreenshot: alltx-01-semua
+- tapOn: "Pengeluaran"
+- waitForAnimationToEnd
+- takeScreenshot: alltx-02-pengeluaran
+- tapOn: "Pemasukan"
+- waitForAnimationToEnd
+- takeScreenshot: alltx-03-pemasukan-kosong

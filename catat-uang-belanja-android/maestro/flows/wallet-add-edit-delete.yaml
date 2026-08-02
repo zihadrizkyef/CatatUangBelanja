@@ -1,0 +1,47 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Full wallet CRUD: add a wallet, rename it, then delete it (via the
+# confirm-delete dialog).
+#
+# NOTE: the "+" add-wallet button (top-right of the "Dompet Saya" row) and
+# the pencil edit icon (top-right of Wallet Detail's header) are icon-only
+# with no text/semantics label, so they're tapped by screen-percentage
+# point instead of tapOn text. The edit-icon point (89%,7%) is confirmed
+# from several past live QA runs; the add-wallet point (90%,26%) is a
+# best-effort estimate (derived, not directly observed) — nudge it if the
+# tap misses on first run.
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Dompet"
+- waitForAnimationToEnd
+- tapOn:
+    point: "90%,26%"
+- waitForAnimationToEnd
+- tapOn: "Nama dompet"
+- inputText: "Dompet Uji Regresi"
+- tapOn: "Simpan"
+- waitForAnimationToEnd
+- takeScreenshot: wallet-crud-01-after-add
+- tapOn: "Dompet Uji Regresi"
+- waitForAnimationToEnd
+- tapOn:
+    point: "89%,7%"
+- waitForAnimationToEnd
+- tapOn: "Nama dompet"
+- eraseText: 50
+- inputText: "Dompet Uji Regresi (Diedit)"
+- tapOn: "Simpan"
+- waitForAnimationToEnd
+- takeScreenshot: wallet-crud-02-after-edit
+- tapOn:
+    point: "89%,7%"
+- waitForAnimationToEnd
+- tapOn: "Hapus Dompet"
+- waitForAnimationToEnd
+- tapOn: "Ya, Hapus"
+- waitForAnimationToEnd
+- takeScreenshot: wallet-crud-03-after-delete

@@ -1,0 +1,36 @@
+appId: com.catatuangbelanja.catat_uang_belanja
+tags:
+  - regression
+---
+# Kelola Kategori CRUD: add a category, rename it, then delete it (via the
+# confirm-delete dialog). Reached through Pengaturan > "Kelola Kategori".
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Pengaturan"
+- waitForAnimationToEnd
+- tapOn: "Kelola Kategori"
+- waitForAnimationToEnd
+- tapOn: "+ Tambah Kategori"
+- waitForAnimationToEnd
+- tapOn: "Nama kategori"
+- inputText: "Kategori Uji Regresi"
+- tapOn: "Simpan"
+- waitForAnimationToEnd
+- takeScreenshot: category-crud-01-after-add
+- tapOn: "Kategori Uji Regresi"
+- waitForAnimationToEnd
+- tapOn: "Nama kategori"
+- eraseText: 50
+- inputText: "Kategori Uji Regresi (Diedit)"
+- tapOn: "Simpan"
+- waitForAnimationToEnd
+- takeScreenshot: category-crud-02-after-edit
+- tapOn: "Kategori Uji Regresi (Diedit)"
+- waitForAnimationToEnd
+- tapOn: "Hapus Kategori"
+- waitForAnimationToEnd
+- tapOn: "Ya, Hapus"
+- waitForAnimationToEnd
+- takeScreenshot: category-crud-03-after-delete
