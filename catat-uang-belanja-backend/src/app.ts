@@ -4,6 +4,7 @@ import express from 'express';
 import { requireAuth } from './middleware/auth';
 import { authRouter } from './routes/auth';
 import { healthRouter } from './routes/health';
+import { jagoRouter } from './routes/jago';
 import { meRouter } from './routes/me';
 import { syncRouter } from './routes/sync';
 
@@ -16,6 +17,7 @@ app.use('/health', healthRouter);
 app.use('/auth', authRouter);
 app.use('/me', requireAuth, meRouter);
 app.use('/sync', syncRouter);
+app.use('/jago', jagoRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found' });

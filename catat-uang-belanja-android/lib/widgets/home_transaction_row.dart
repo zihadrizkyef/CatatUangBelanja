@@ -8,6 +8,7 @@ import '../models/transaction.dart';
 import '../models/wallet.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
+import 'jago_badge.dart';
 import 'openmoji_icon.dart';
 import '../theme/app_theme.dart';
 
@@ -83,7 +84,21 @@ class HomeTransactionRow extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: palette.textPrimary)),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              label,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTheme.body(fontSize: 14, fontWeight: FontWeight.bold, color: palette.textPrimary),
+                            ),
+                          ),
+                          if (transaction.source == TransactionSource.emailSync) ...[
+                            const SizedBox(width: 6),
+                            const JagoBadge(),
+                          ],
+                        ],
+                      ),
                       Text(subLine, style: AppTheme.body(fontSize: 12, fontWeight: FontWeight.bold, color: palette.textSecondary)),
                     ],
                   ),

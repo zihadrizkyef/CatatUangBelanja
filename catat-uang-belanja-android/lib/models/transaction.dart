@@ -2,6 +2,12 @@ enum TransactionType { income, expense, transfer }
 
 enum SyncStatus { synced, pending, failed }
 
+/// Not part of the original doc 5.2 model — added for the Bank Jago email
+/// sync (integrasi-jago). Server-set only; the app never constructs a
+/// [Transaction] with [TransactionSource.emailSync] itself, it only reads
+/// one back via [Transaction.fromMap] after a pull.
+enum TransactionSource { manual, emailSync }
+
 /// See doc 5.2. Transfers (doc 4.3) reuse this single row: [walletId] is the
 /// source wallet, [targetWalletId] is the destination — see
 /// FinanceRepository.balanceOf for how both sides are applied.
@@ -20,6 +26,10 @@ class Transaction {
   final SyncStatus syncStatus;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final TransactionSource source;
+  // Gmail message id for source == emailSync, otherwise null — server-set
+  // dedupe key, never read/written by app code beyond round-tripping it.
+  final String? externalId;
 
   const Transaction({
     required this.id,
@@ -36,6 +46,8 @@ class Transaction {
     this.syncStatus = SyncStatus.synced,
     required this.createdAt,
     required this.updatedAt,
+    this.source = TransactionSource.manual,
+    this.externalId,
   });
 
   Transaction copyWith({
@@ -70,6 +82,10 @@ class Transaction {
       syncStatus: syncStatus ?? this.syncStatus,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      // Not editable via copyWith — same treatment as recurringId above:
+      // server-set provenance the UI can read but never reassign.
+      source: source,
+      externalId: externalId,
     );
   }
 
@@ -89,6 +105,8 @@ class Transaction {
       'sync_status': syncStatus.name,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'source': source.name,
+      'external_id': externalId,
     };
   }
 
@@ -108,6 +126,11 @@ class Transaction {
       syncStatus: SyncStatus.values.byName(map['sync_status'] as String),
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
+      // Older rows (pre-integrasi-jago) have no 'source' column value cached
+      // anywhere but the DB default — fall back to manual, matching that
+      // column's SQLite `DEFAULT 'manual'` (see AppDatabase._onUpgrade).
+      source: TransactionSource.values.byName(map['source'] as String? ?? 'manual'),
+      externalId: map['external_id'] as String?,
     );
   }
 }

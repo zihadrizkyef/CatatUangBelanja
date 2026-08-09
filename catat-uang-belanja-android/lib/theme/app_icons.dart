@@ -46,6 +46,7 @@ class AppIcons {
   static const String help = '$_base/speech_balloon.svg';
   static const String about = '$_base/information.svg';
   static const String magic = '$_base/sparkles.svg';
+  static const String bankJago = '$_base/bank.svg';
 
   /// Keyed by [Category.iconValue] / [Wallet.iconValue] as already seeded in
   /// `AppDatabase._seed` — the DB rows don't change, only how their

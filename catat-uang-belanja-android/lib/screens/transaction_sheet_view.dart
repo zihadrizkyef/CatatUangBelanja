@@ -31,6 +31,7 @@ class TransactionSheetView extends StatelessWidget {
     super.key,
     required this.isEdit,
     required this.isIncome,
+    this.isAmountLocked = false,
     required this.amountStr,
     required this.categories,
     required this.selectedCategory,
@@ -48,6 +49,12 @@ class TransactionSheetView extends StatelessWidget {
 
   final bool isEdit;
   final bool isIncome;
+  // Bank Jago email-sync rows (integrasi-jago) keep amount/wallet as
+  // reported by the bank — the keypad's digit/backspace keys still call
+  // onKeyTap (the container ignores them when locked, see
+  // TransactionSheet._pressKey), but the wallet chip's onTap is nulled out
+  // by the caller when this is true.
+  final bool isAmountLocked;
   final String amountStr;
   final List<models.Category> categories;
   final models.Category? selectedCategory;
@@ -56,7 +63,7 @@ class TransactionSheetView extends StatelessWidget {
   final TextEditingController noteController;
   final ValueChanged<TransactionType> onSelectType;
   final ValueChanged<models.Category> onSelectCategory;
-  final VoidCallback onTapWallet;
+  final VoidCallback? onTapWallet;
   final VoidCallback onTapDate;
   final ValueChanged<String> onKeyTap;
   final VoidCallback onClose;
@@ -145,6 +152,14 @@ class TransactionSheetView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: AppTheme.heading(fontSize: 30, color: palette.textPrimary),
             ),
+            if (isAmountLocked) ...[
+              const SizedBox(height: 4),
+              Text(
+                '🔒 Nominal & dompet otomatis dari Bank Jago',
+                textAlign: TextAlign.center,
+                style: AppTheme.body(fontSize: 11, fontWeight: FontWeight.bold, color: palette.textSecondary),
+              ),
+            ],
             const SizedBox(height: 14),
             Wrap(
               spacing: 8,
@@ -201,39 +216,42 @@ class TransactionSheetView extends StatelessWidget {
                 if (wallet != null) ...[
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Material(
-                      color: palette.chipNeutral,
-                      borderRadius: BorderRadius.circular(12),
-                      child: InkWell(
+                    child: Opacity(
+                      opacity: isAmountLocked ? 0.6 : 1,
+                      child: Material(
+                        color: palette.chipNeutral,
                         borderRadius: BorderRadius.circular(12),
-                        onTap: onTapWallet,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (AppIcons.byIconValue[wallet!.iconValue] !=
-                                  null)
-                                OpenMojiIcon(
-                                  AppIcons.byIconValue[wallet!.iconValue]!,
-                                  size: 30,
-                                ),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Text(
-                                  wallet!.name,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTheme.body(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: palette.textPrimary,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: onTapWallet,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (AppIcons.byIconValue[wallet!.iconValue] !=
+                                    null)
+                                  OpenMojiIcon(
+                                    AppIcons.byIconValue[wallet!.iconValue]!,
+                                    size: 30,
+                                  ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    wallet!.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTheme.body(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: palette.textPrimary,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -367,6 +385,28 @@ Widget previewTransactionSheetViewEdit() {
     onSelectType: (_) {},
     onSelectCategory: (_) {},
     onTapWallet: () {},
+    onTapDate: () {},
+    onKeyTap: (_) {},
+    onClose: () {},
+    onDelete: () {},
+  );
+}
+
+@Preview(name: 'TransactionSheetView · sinkron Jago')
+Widget previewTransactionSheetViewJagoSynced() {
+  return TransactionSheetView(
+    isEdit: true,
+    isIncome: false,
+    isAmountLocked: true,
+    amountStr: '45000',
+    categories: [_previewSheetCategory],
+    selectedCategory: _previewSheetCategory,
+    wallet: _previewSheetWallet,
+    dateTime: DateTime(2026, 7, 4),
+    noteController: TextEditingController(text: 'SEBLAK BU YATI'),
+    onSelectType: (_) {},
+    onSelectCategory: (_) {},
+    onTapWallet: null,
     onTapDate: () {},
     onKeyTap: (_) {},
     onClose: () {},

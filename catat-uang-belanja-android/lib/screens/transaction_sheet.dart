@@ -36,6 +36,10 @@ class _TransactionSheetState extends State<TransactionSheet> {
 
   bool get _isEdit => widget.existing != null;
 
+  /// Bank Jago email-sync rows (integrasi-jago) keep their amount/wallet
+  /// as reported by the bank — only note/category/date stay editable.
+  bool get _isAmountLocked => widget.existing?.source == TransactionSource.emailSync;
+
   models.CategoryType get _categoryType => _type == TransactionType.income
       ? models.CategoryType.income
       : models.CategoryType.expense;
@@ -104,6 +108,7 @@ class _TransactionSheetState extends State<TransactionSheet> {
       _save();
       return;
     }
+    if (_isAmountLocked) return;
     setState(() {
       if (k == '⌫') {
         _amountStr = _amountStr.isEmpty
@@ -190,6 +195,7 @@ class _TransactionSheetState extends State<TransactionSheet> {
     return TransactionSheetView(
       isEdit: _isEdit,
       isIncome: _type == TransactionType.income,
+      isAmountLocked: _isAmountLocked,
       amountStr: _amountStr,
       categories: categories,
       selectedCategory: _category,
@@ -198,7 +204,7 @@ class _TransactionSheetState extends State<TransactionSheet> {
       noteController: _noteController,
       onSelectType: _setType,
       onSelectCategory: (cat) => setState(() => _category = cat),
-      onTapWallet: () => _cycleWallet(wallets.length),
+      onTapWallet: _isAmountLocked ? null : () => _cycleWallet(wallets.length),
       onTapDate: _pickDate,
       onKeyTap: _pressKey,
       onClose: () => Navigator.of(context).pop(),

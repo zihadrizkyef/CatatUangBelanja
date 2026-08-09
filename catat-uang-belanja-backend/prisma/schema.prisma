@@ -64,6 +64,13 @@ enum AppLockType {
   None
 }
 
+// Not part of the Flutter model — server-only, marks which Transaction rows
+// were created by the Bank Jago email sync vs. entered by hand.
+enum TransactionSource {
+  Manual
+  EmailSync
+}
+
 // Login is Google Sign-In (no password / OTP stored) — see doc 4.10 / 6.1.
 model User {
   id                 String               @id @default(uuid())
@@ -78,6 +85,17 @@ model User {
   budgets            Budget[]
   recurringTxns      RecurringTransaction[]
   settings           Settings?
+
+  // Bank Jago email sync (integrasi-jago) — all null/unset until the user
+  // connects it from Settings. jagoRefreshToken is AES-encrypted at rest
+  // (see lib/googleOAuth.ts), never returned to any client. Which Jago
+  // Kantong maps to which Wallet lives in JagoKantong below, not here —
+  // a user has one Kantong Terhubung plus zero or more named pockets,
+  // each becoming its own Wallet (see lib/jagoSync.ts).
+  jagoRefreshToken   String?
+  jagoHistoryId      String?
+  jagoConnectedAt    DateTime?
+  jagoKantongs       JagoKantong[]
 }
 
 model Wallet {
@@ -97,8 +115,28 @@ model Wallet {
 
   transactionsFrom Transaction[] @relation("WalletSource")
   transactionsTo   Transaction[] @relation("WalletTarget")
+  jagoKantongs     JagoKantong[]
 
   @@index([userId])
+}
+
+// Maps one Bank Jago Kantong (pocket) to the Wallet auto-created for it —
+// see lib/jagoSync.ts's resolveKantongWallet. Jago's own notification
+// emails expose two disjoint identifier spaces that can't be reconciled
+// automatically (see jagoParser.ts's header comment): the single Kantong
+// Terhubung is only ever identified by an account number, everything else
+// only by a Kantong name — so `key` is either the CONNECTED_KANTONG_KEY
+// sentinel or a lowercased/trimmed Kantong name, never an account number.
+model JagoKantong {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  key       String
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+  walletId  String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, key])
 }
 
 model Category {
@@ -141,6 +179,13 @@ model Transaction {
   syncStatus      SyncStatus      @default(Synced)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+
+  // Not part of the Flutter model's write path (doc 5.2) — server-set,
+  // pulled down read-only. source distinguishes Bank Jago email-sync rows
+  // from hand-entered ones; externalId is the Gmail message id, used as
+  // the dedupe key so re-running the sync never double-inserts.
+  source          TransactionSource @default(Manual)
+  externalId      String?         @unique
 
   @@index([userId])
   @@index([walletId])

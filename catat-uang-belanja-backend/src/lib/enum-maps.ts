@@ -10,6 +10,7 @@ import type {
   IconType,
   SyncStatus,
   Theme,
+  TransactionSource,
   TransactionType,
   WalletType,
 } from '@prisma/client';
@@ -73,4 +74,12 @@ export const [appLockTypeToPrisma, appLockTypeToWire] = buildMaps<AppLockType>([
   ['pin', 'PIN'],
   ['biometric', 'Biometric'],
   ['none', 'None'],
+]);
+
+// Pull-only (doc note on Transaction.source/externalId in schema.prisma) —
+// the client never pushes these back, so only the wire-direction map is
+// used, but toPrisma is kept for symmetry/tests.
+export const [transactionSourceToPrisma, transactionSourceToWire] = buildMaps<TransactionSource>([
+  ['manual', 'Manual'],
+  ['emailSync', 'EmailSync'],
 ]);

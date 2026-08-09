@@ -27,7 +27,7 @@ class AppDatabase {
   factory AppDatabase.forTesting(String dbName) => AppDatabase._(dbName: dbName);
 
   static const _defaultDbName = 'catat_uang_belanja.db';
-  static const _dbVersion = 4;
+  static const _dbVersion = 5;
 
   /// Fixed namespace for deriving stable, deterministic IDs (UUID v5) for
   /// system wallets/categories from their `iconValue` key — see
@@ -111,6 +111,8 @@ class AppDatabase {
         sync_status TEXT NOT NULL DEFAULT 'synced',
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
+        source TEXT NOT NULL DEFAULT 'manual',
+        external_id TEXT,
         FOREIGN KEY (wallet_id) REFERENCES wallets (id),
         FOREIGN KEY (target_wallet_id) REFERENCES wallets (id),
         FOREIGN KEY (category_id) REFERENCES categories (id)
@@ -162,6 +164,12 @@ class AppDatabase {
         'budgets.category_id',
         'budgets.trigger_category_id',
       ]);
+    }
+    if (oldVersion < 5) {
+      // Bank Jago email sync (integrasi-jago) — every existing row is a
+      // manual entry by definition, matching the column default.
+      await db.execute("ALTER TABLE transactions ADD COLUMN source TEXT NOT NULL DEFAULT 'manual'");
+      await db.execute('ALTER TABLE transactions ADD COLUMN external_id TEXT');
     }
   }
 

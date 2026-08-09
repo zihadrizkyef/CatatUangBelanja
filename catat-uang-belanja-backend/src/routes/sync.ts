@@ -15,6 +15,7 @@ import {
   syncStatusToWire,
   themeToPrisma,
   themeToWire,
+  transactionSourceToWire,
   transactionTypeToPrisma,
   transactionTypeToWire,
   walletTypeToPrisma,
@@ -362,6 +363,10 @@ syncRouter.get('/pull', async (req, res) => {
       sync_status: syncStatusToWire[t.syncStatus],
       created_at: t.createdAt.toISOString(),
       updated_at: t.updatedAt.toISOString(),
+      // Pull-only (integrasi-jago) — the client never pushes these back;
+      // see schema.prisma's note on Transaction.source/externalId.
+      source: transactionSourceToWire[t.source],
+      external_id: t.externalId,
     })),
     budgets: budgets.map((b) => ({
       id: b.id,

@@ -9,6 +9,7 @@ import '../models/transaction.dart';
 import '../repositories/finance_repository.dart';
 import 'api_client.dart';
 import 'auth_service.dart';
+import 'jago_service.dart';
 
 /// Header sync indicator states (doc 7.2: "tersinkron / menunggu / offline").
 enum SyncState { idle, syncing, offline, error }
@@ -31,11 +32,13 @@ class SyncService extends ChangeNotifier {
     ApiClient? apiClient,
     AppDatabase? appDatabase,
     Connectivity? connectivity,
+    JagoService? jagoService,
   })  : _repository = repository, // ignore: prefer_initializing_formals
         _authService = authService, // ignore: prefer_initializing_formals
         _apiClient = apiClient ?? ApiClient(),
         _appDatabase = appDatabase ?? AppDatabase.instance,
-        _connectivity = connectivity ?? Connectivity() {
+        _connectivity = connectivity ?? Connectivity(),
+        _jagoService = jagoService ?? JagoService(authService: authService) {
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
       (results) {
         if (!results.contains(ConnectivityResult.none)) {
@@ -62,6 +65,7 @@ class SyncService extends ChangeNotifier {
   final ApiClient _apiClient;
   final AppDatabase _appDatabase;
   final Connectivity _connectivity;
+  final JagoService _jagoService;
   late final StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
   Timer? _debounceTimer;
 
@@ -125,6 +129,12 @@ class SyncService extends ChangeNotifier {
         'transactions': pendingTransactions.map((t) => _toWireFormat('transactions', t.toMap())).toList(),
       });
       await _markSynced(pendingTransactions.map((t) => t.id));
+
+      // Best-effort: Jago sync failing (not connected, Gmail token expired,
+      // Gmail API hiccup, ...) should never block the core wallet/category/
+      // transaction sync below — errors are already swallowed inside
+      // JagoService.sync() itself.
+      await _jagoService.sync();
 
       final since = await _loadCursor();
       final pulled = await _apiClient.pull(token, since: since);

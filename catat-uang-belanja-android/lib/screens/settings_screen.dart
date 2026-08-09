@@ -6,6 +6,7 @@ import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import 'budget_screen.dart';
 import 'category_screen.dart';
+import 'jago_settings_screen.dart';
 import 'login_screen.dart';
 import 'profile_edit_sheet.dart';
 import 'security_settings_screen.dart';
@@ -35,6 +36,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _openSecuritySettings() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SecuritySettingsScreen()));
+  }
+
+  void _openJagoSettings() {
+    if (!context.read<FinanceRepository>().isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Masuk dengan Google dulu sebelum menghubungkan Bank Jago, Bun.')),
+      );
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const JagoSettingsScreen()));
   }
 
   void _openLogin() {
@@ -169,6 +180,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SettingGroup('Akun', [
           SettingItem(AppIcons.profile, 'Profil', _openProfileEdit),
           SettingItem(AppIcons.security, 'Keamanan', _openSecuritySettings),
+          SettingItem(AppIcons.bankJago, 'Bank Jago', _openJagoSettings),
         ]),
         SettingGroup('Preferensi', [
           SettingItem(AppIcons.notification, 'Notifikasi', _showComingSoon),

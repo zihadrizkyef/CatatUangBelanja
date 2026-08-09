@@ -66,6 +66,31 @@ class ApiClient {
     return _decode(response);
   }
 
+  /// Bank Jago email sync (integrasi-jago) — see backend routes/jago.ts.
+
+  Future<Map<String, Object?>> fetchJagoStatus(String token) async {
+    final response = await _client.get(_uri('/jago/status'), headers: _headers(token: token));
+    return _decode(response);
+  }
+
+  Future<Map<String, Object?>> connectJago(String token, {required String serverAuthCode}) async {
+    final response = await _client.post(
+      _uri('/jago/connect'),
+      headers: _headers(token: token),
+      body: jsonEncode({'server_auth_code': serverAuthCode}),
+    );
+    return _decode(response);
+  }
+
+  Future<void> disconnectJago(String token) async {
+    _decode(await _client.delete(_uri('/jago/connect'), headers: _headers(token: token)));
+  }
+
+  Future<Map<String, Object?>> syncJago(String token) async {
+    final response = await _client.post(_uri('/jago/sync'), headers: _headers(token: token));
+    return _decode(response);
+  }
+
   Map<String, Object?> _decode(http.Response response) {
     final body = response.body.isEmpty ? <String, Object?>{} : jsonDecode(response.body) as Map<String, Object?>;
     if (response.statusCode < 200 || response.statusCode >= 300) {
