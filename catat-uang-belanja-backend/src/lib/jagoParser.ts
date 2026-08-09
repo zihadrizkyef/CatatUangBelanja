@@ -171,6 +171,17 @@ function parseFromTransferTable(subject: string, html: string, rows: Map<string,
   return { kind: 'external', amount, direction, merchant, occurredAt };
 }
 
+// Jago wraps dynamic values (amounts, Kantong names, ...) in their own
+// inline tags even in the plain-sentence templates — e.g. "dari Kantong
+// <span class="param">Modal Bisnis</span> ke Kantong ...". Harmless for
+// parseRupiah/parseDirection (keyword/digit matching doesn't care about
+// surrounding tags), but the loose name-capturing regexes below
+// (merchantAfterKeDariPattern, twoNamedKantongPattern, ...) would
+// otherwise capture the tags themselves — strip them first.
+function stripTags(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ');
+}
+
 // --- Plain-sentence template (family 2 above) — also the fallback for
 // anything else unrecognized (e.g. if Jago ever sends a genuinely
 // plain-text notification instead of HTML). ---
@@ -192,7 +203,8 @@ function extractMerchant(text: string): string | null {
 }
 
 function parseFromSentence(subject: string, bodyText: string): ParsedJagoEvent | null {
-  const combined = `${subject}\n${bodyText}`;
+  const strippedBody = stripTags(bodyText);
+  const combined = `${subject}\n${strippedBody}`;
   const amount = parseRupiah(combined);
   const direction = parseDirection(combined);
   if (amount === null || direction === null) return null;
@@ -204,7 +216,7 @@ function parseFromSentence(subject: string, bodyText: string): ParsedJagoEvent |
     kind: 'external',
     amount,
     direction,
-    merchant: extractMerchant(bodyText),
+    merchant: extractMerchant(strippedBody),
     occurredAt: parseOccurredAt(combined),
   };
 }
@@ -216,10 +228,10 @@ function parseFromSentence(subject: string, bodyText: string): ParsedJagoEvent |
 // mentioned; the money implicitly returns to the Kantong Terhubung). ---
 
 const twoNamedKantongPattern = /dari Kantong\s+(.+?)\s+ke Kantong\s+(.+?)\s*\./i;
-const oneNamedKantongPattern = /penarikan sebesar Rp[\d.,]+ dari Kantong\s+(.+?)\s*\./i;
+const oneNamedKantongPattern = /penarikan sebesar\s+Rp[\d.,]+\s+dari Kantong\s+(.+?)\s*\./i;
 
 function parseKantongTransfer(subject: string, body: string): ParsedJagoEvent | null {
-  const combined = `${subject}\n${body}`;
+  const combined = `${subject}\n${stripTags(body)}`;
 
   const twoNamed = twoNamedKantongPattern.exec(combined);
   if (twoNamed) {

@@ -111,18 +111,22 @@ describe('parseJagoEmail — cash withdrawal (debit), no Dari/Ke rows at all', (
 });
 
 describe('parseJagoEmail — plain-sentence templates (no table)', () => {
+  // Jago wraps every dynamic value in its own <span class="param"> even in
+  // these sentence-style templates (confirmed against the real export) —
+  // fixtures below intentionally include that wrapping so a regression
+  // that stops stripping it (see stripTags in jagoParser.ts) fails loudly.
   it('parses a debit card transaction with no merchant disclosed', () => {
     const result = parseJagoEmail(
       'Kamu melakukan transaksi menggunakan kartu debit Jago',
-      "<p>Assalamu'alaikum BUDI SANTOSO,</p><p>Kamu telah melakukan transaksi sebesar Rp372.118 menggunakan kartu debit Jago.</p>",
+      "<p>Assalamu'alaikum BUDI SANTOSO,</p><p>Kamu telah melakukan transaksi sebesar <span class=\"param\">Rp372.118</span> menggunakan kartu debit Jago.</p>",
     );
     expect(result).toEqual({ kind: 'external', amount: 372118, direction: 'debit', merchant: null, occurredAt: null });
   });
 
-  it('parses an insufficient-balance fee and its "di <merchant>" phrasing', () => {
+  it('parses an insufficient-balance fee and its "di <merchant>" phrasing, stripping the span around the merchant', () => {
     const result = parseJagoEmail(
       'Kamu telah dikenakan biaya dari kekurangan saldo',
-      '<p>Halo BUDI SANTOSO,</p><p>Kamu telah dikenakan biaya sebesar Rp5.000 karena saldo di Kantong terhubung tidak mencukupi untuk transaksi Visa di TOKO ONLINE CONTOH .</p>',
+      '<p>Halo BUDI SANTOSO,</p><p>Kamu telah dikenakan biaya sebesar <span class="param">Rp5.000</span> karena saldo di Kantong terhubung tidak mencukupi untuk transaksi Visa di <span class="param">TOKO ONLINE CONTOH</span> .</p>',
     );
     expect(result).toEqual({ kind: 'external', amount: 5000, direction: 'debit', merchant: 'TOKO ONLINE CONTOH', occurredAt: null });
   });
@@ -130,17 +134,20 @@ describe('parseJagoEmail — plain-sentence templates (no table)', () => {
   it('parses a refund as credit despite the body mentioning the original outgoing "pengiriman"', () => {
     const result = parseJagoEmail(
       'Uang telah dikembalikan',
-      '<p>Halo BUDI SANTOSO,</p><p>Pengiriman uangmu sebesar Rp Rp18.816 ke TOKO CONTOH LAINNYA .</p>',
+      '<p>Halo BUDI SANTOSO,</p><p>Pengiriman uangmu sebesar Rp <span class="param">Rp18.816</span> ke <span class="param">TOKO CONTOH LAINNYA</span> .</p>',
     );
     expect(result).toEqual({ kind: 'external', amount: 18816, direction: 'credit', merchant: 'TOKO CONTOH LAINNYA', occurredAt: null });
   });
 });
 
 describe('parseJagoEmail — Kantong-to-Kantong transfer', () => {
-  it('parses "dari Kantong X ke Kantong Y" as a transfer between two named pockets', () => {
+  // Real Kantong names arrive wrapped in <span class="param"> too (this is
+  // exactly the shape that shipped broken once — see stripTags in
+  // jagoParser.ts — before real production data caught it).
+  it('parses "dari Kantong X ke Kantong Y" as a transfer between two named pockets, stripping the spans around each name', () => {
     const result = parseJagoEmail(
       'Kamu telah memindahkan uang ke Kantong lain💸',
-      "<p>Assalamu'alaikum BUDI SANTOSO,</p><p>Kamu telah memindahkan uang sebesar Rp72.118 dari Kantong Modal Bisnis ke Kantong Bayar ChatGPT.</p>",
+      '<p>Assalamu\'alaikum BUDI SANTOSO,</p><p>Kamu telah memindahkan uang sebesar <span class="param">Rp72.118</span> dari Kantong <span class="param">Modal Bisnis</span> ke Kantong <span class="param">Bayar ChatGPT</span>.</p>',
     );
     expect(result).toEqual({
       kind: 'kantong_transfer',
@@ -154,7 +161,7 @@ describe('parseJagoEmail — Kantong-to-Kantong transfer', () => {
   it('parses a "penarikan ... dari Kantong X" (no destination named) as a transfer back to the connected Kantong', () => {
     const result = parseJagoEmail(
       'Kamu memindahkan uang dari salah satu Kantong kamu',
-      "<p>Assalamu'alaikum BUDI SANTOSO,</p><p>Kamu baru saja melakukan penarikan sebesar Rp500.000 dari Kantong Modal Bisnis.</p>",
+      '<p>Assalamu\'alaikum BUDI SANTOSO,</p><p>Kamu baru saja melakukan penarikan sebesar <span class="param">Rp500.000</span> dari Kantong <span class="param">Modal Bisnis</span>.</p>',
     );
     expect(result).toEqual({
       kind: 'kantong_transfer',
