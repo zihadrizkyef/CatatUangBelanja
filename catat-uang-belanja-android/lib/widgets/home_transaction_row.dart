@@ -41,10 +41,16 @@ class HomeTransactionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTransfer = transaction.type == TransactionType.transfer;
     final isIncome = transaction.type == TransactionType.income;
+    final categoryLabel = category?.name ?? (isIncome ? 'Pemasukan' : 'Pengeluaran');
+    final hasItemName = transaction.itemName?.isNotEmpty ?? false;
     final label = isTransfer
         ? 'Transfer ke ${targetWallet?.name ?? '-'}'
-        : (category?.name ?? (isIncome ? 'Pemasukan' : 'Pengeluaran'));
-    final sub = (transaction.note?.isNotEmpty ?? false) ? transaction.note! : (isTransfer ? '' : (wallet?.name ?? ''));
+        : (hasItemName ? transaction.itemName! : categoryLabel);
+    final sub = isTransfer
+        ? ''
+        : (hasItemName
+            ? categoryLabel
+            : ((transaction.note?.isNotEmpty ?? false) ? transaction.note! : (wallet?.name ?? '')));
     final subLine = [sub, relativeDate].where((s) => s.isNotEmpty).join(' · ');
     final iconBg = category != null ? Color(int.parse(category!.color.replaceFirst('#', '0xFF'))) : palette.chipNeutral;
     final iconAsset = category != null ? AppIcons.byIconValue[category!.iconValue] : null;

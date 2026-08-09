@@ -27,7 +27,7 @@ class AppDatabase {
   factory AppDatabase.forTesting(String dbName) => AppDatabase._(dbName: dbName);
 
   static const _defaultDbName = 'catat_uang_belanja.db';
-  static const _dbVersion = 4;
+  static const _dbVersion = 5;
 
   /// Fixed namespace for deriving stable, deterministic IDs (UUID v5) for
   /// system wallets/categories from their `iconValue` key — see
@@ -104,6 +104,7 @@ class AppDatabase {
         target_wallet_id TEXT,
         category_id TEXT,
         date_time TEXT NOT NULL,
+        item_name TEXT,
         note TEXT,
         attachment_url TEXT,
         recurring_id TEXT,
@@ -162,6 +163,9 @@ class AppDatabase {
         'budgets.category_id',
         'budgets.trigger_category_id',
       ]);
+    }
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE transactions ADD COLUMN item_name TEXT');
     }
   }
 

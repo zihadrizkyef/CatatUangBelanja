@@ -63,6 +63,9 @@ void main() {
 
     expect(find.text('Tambah Pengeluaran'), findsOneWidget);
 
+    await tester.tap(find.text('Pilih kategori, yuk!'));
+    await tester.pumpAndSettle();
+
     await tester.ensureVisible(find.text('Belanja Dapur'));
     await tester.tap(find.text('Belanja Dapur'));
     await tester.pumpAndSettle();

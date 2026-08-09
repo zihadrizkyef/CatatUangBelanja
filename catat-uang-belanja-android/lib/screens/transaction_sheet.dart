@@ -5,8 +5,10 @@ import 'package:uuid/uuid.dart';
 import '../models/category.dart' as models;
 import '../models/transaction.dart';
 import '../repositories/finance_repository.dart';
+import '../theme/app_colors.dart';
 import '../utils/confirm_delete.dart';
 import '../utils/snackbar.dart';
+import 'category_picker_sheet.dart';
 import 'transaction_sheet_view.dart';
 
 /// Opened from AppShell's "+" FAB (doc 6.2) container: expense/income
@@ -32,6 +34,7 @@ class _TransactionSheetState extends State<TransactionSheet> {
   models.Category? _category;
   late String _amountStr;
   late DateTime _dateTime;
+  late final TextEditingController _itemNameController;
   late final TextEditingController _noteController;
 
   bool get _isEdit => widget.existing != null;
@@ -49,6 +52,7 @@ class _TransactionSheetState extends State<TransactionSheet> {
         : TransactionType.expense;
     _amountStr = existing == null ? '' : existing.amount.toString();
     _dateTime = existing?.dateTime ?? DateTime.now();
+    _itemNameController = TextEditingController(text: existing?.itemName ?? '');
     _noteController = TextEditingController(text: existing?.note ?? '');
     if (existing != null) {
       final repository = context.read<FinanceRepository>();
@@ -64,6 +68,7 @@ class _TransactionSheetState extends State<TransactionSheet> {
 
   @override
   void dispose() {
+    _itemNameController.dispose();
     _noteController.dispose();
     super.dispose();
   }
@@ -99,6 +104,28 @@ class _TransactionSheetState extends State<TransactionSheet> {
     setState(() => _walletIndex = (_walletIndex + 1) % walletCount);
   }
 
+  Future<void> _openCategoryPicker() async {
+    final repository = context.read<FinanceRepository>();
+    final categories = repository.categories
+        .where((c) => c.type == _categoryType)
+        .toList();
+    final picked = await showModalBottomSheet<models.Category>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CategoryPickerSheet(
+        categories: categories,
+        selectedCategory: _category,
+        accentColor: _type == TransactionType.income
+            ? AppColors.gold
+            : AppColors.peach,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _category = picked);
+    }
+  }
+
   void _pressKey(String k) {
     if (k == '✓') {
       _save();
@@ -130,6 +157,7 @@ class _TransactionSheetState extends State<TransactionSheet> {
     if (wallets.isEmpty) return;
 
     final wallet = wallets[_walletIndex % wallets.length];
+    final itemName = _itemNameController.text.trim();
     final note = _noteController.text.trim();
     final existing = widget.existing;
     if (existing != null) {
@@ -140,6 +168,8 @@ class _TransactionSheetState extends State<TransactionSheet> {
           walletId: wallet.id,
           categoryId: _category!.id,
           dateTime: _dateTime,
+          itemName: itemName.isEmpty ? null : itemName,
+          clearItemName: itemName.isEmpty,
           note: note.isEmpty ? null : note,
           clearNote: note.isEmpty,
         ),
@@ -154,6 +184,7 @@ class _TransactionSheetState extends State<TransactionSheet> {
           walletId: wallet.id,
           categoryId: _category!.id,
           dateTime: _dateTime,
+          itemName: itemName.isEmpty ? null : itemName,
           note: note.isEmpty ? null : note,
           createdAt: now,
           updatedAt: now,
@@ -183,21 +214,18 @@ class _TransactionSheetState extends State<TransactionSheet> {
     final wallet = wallets.isEmpty
         ? null
         : wallets[_walletIndex % wallets.length];
-    final categories = repository.categories
-        .where((c) => c.type == _categoryType)
-        .toList();
 
     return TransactionSheetView(
       isEdit: _isEdit,
       isIncome: _type == TransactionType.income,
       amountStr: _amountStr,
-      categories: categories,
       selectedCategory: _category,
       wallet: wallet,
       dateTime: _dateTime,
+      itemNameController: _itemNameController,
       noteController: _noteController,
       onSelectType: _setType,
-      onSelectCategory: (cat) => setState(() => _category = cat),
+      onTapCategory: _openCategoryPicker,
       onTapWallet: () => _cycleWallet(wallets.length),
       onTapDate: _pickDate,
       onKeyTap: _pressKey,

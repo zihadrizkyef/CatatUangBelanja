@@ -13,6 +13,7 @@ class Transaction {
   final String? targetWalletId;
   final String? categoryId;
   final DateTime dateTime;
+  final String? itemName;
   final String? note;
   final String? attachmentUrl;
   final String? recurringId;
@@ -29,6 +30,7 @@ class Transaction {
     this.targetWalletId,
     this.categoryId,
     required this.dateTime,
+    this.itemName,
     this.note,
     this.attachmentUrl,
     this.recurringId,
@@ -45,6 +47,12 @@ class Transaction {
     String? targetWalletId,
     String? categoryId,
     DateTime? dateTime,
+    String? itemName,
+    // `itemName ?? this.itemName` alone can't express "clear the item name"
+    // since passing null is indistinguishable from not passing it — this
+    // flag lets a caller (see TransactionSheet's edit mode) explicitly clear
+    // it, mirroring [clearNote].
+    bool clearItemName = false,
     String? note,
     // `note ?? this.note` alone can't express "clear the note" since passing
     // null is indistinguishable from not passing it — this flag lets a
@@ -63,6 +71,7 @@ class Transaction {
       targetWalletId: targetWalletId ?? this.targetWalletId,
       categoryId: categoryId ?? this.categoryId,
       dateTime: dateTime ?? this.dateTime,
+      itemName: clearItemName ? null : (itemName ?? this.itemName),
       note: clearNote ? null : (note ?? this.note),
       attachmentUrl: attachmentUrl ?? this.attachmentUrl,
       recurringId: recurringId,
@@ -82,6 +91,7 @@ class Transaction {
       'target_wallet_id': targetWalletId,
       'category_id': categoryId,
       'date_time': dateTime.toIso8601String(),
+      'item_name': itemName,
       'note': note,
       'attachment_url': attachmentUrl,
       'recurring_id': recurringId,
@@ -101,6 +111,7 @@ class Transaction {
       targetWalletId: map['target_wallet_id'] as String?,
       categoryId: map['category_id'] as String?,
       dateTime: DateTime.parse(map['date_time'] as String),
+      itemName: map['item_name'] as String?,
       note: map['note'] as String?,
       attachmentUrl: map['attachment_url'] as String?,
       recurringId: map['recurring_id'] as String?,

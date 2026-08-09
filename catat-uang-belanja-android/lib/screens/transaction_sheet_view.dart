@@ -10,7 +10,6 @@ import '../theme/app_colors.dart';
 import '../theme/app_icons.dart';
 import '../theme/app_theme.dart';
 import '../utils/sheet_padding.dart';
-import '../widgets/category_chip.dart';
 import '../widgets/numeric_keypad.dart';
 import '../widgets/segment_button.dart';
 import '../widgets/openmoji_icon.dart';
@@ -32,13 +31,13 @@ class TransactionSheetView extends StatelessWidget {
     required this.isEdit,
     required this.isIncome,
     required this.amountStr,
-    required this.categories,
     required this.selectedCategory,
     required this.wallet,
     required this.dateTime,
+    required this.itemNameController,
     required this.noteController,
     required this.onSelectType,
-    required this.onSelectCategory,
+    required this.onTapCategory,
     required this.onTapWallet,
     required this.onTapDate,
     required this.onKeyTap,
@@ -49,13 +48,13 @@ class TransactionSheetView extends StatelessWidget {
   final bool isEdit;
   final bool isIncome;
   final String amountStr;
-  final List<models.Category> categories;
   final models.Category? selectedCategory;
   final Wallet? wallet;
   final DateTime dateTime;
+  final TextEditingController itemNameController;
   final TextEditingController noteController;
   final ValueChanged<TransactionType> onSelectType;
-  final ValueChanged<models.Category> onSelectCategory;
+  final VoidCallback onTapCategory;
   final VoidCallback onTapWallet;
   final VoidCallback onTapDate;
   final ValueChanged<String> onKeyTap;
@@ -146,19 +145,55 @@ class TransactionSheetView extends StatelessWidget {
               style: AppTheme.heading(fontSize: 30, color: palette.textPrimary),
             ),
             const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final cat in categories)
-                  CategoryChip(
-                    category: cat,
-                    selected: selectedCategory?.id == cat.id,
-                    selectedColor: accent,
-                    palette: palette,
-                    onTap: () => onSelectCategory(cat),
+            Material(
+              color: palette.chipNeutral,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: onTapCategory,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
                   ),
-              ],
+                  child: Row(
+                    children: [
+                      if (selectedCategory != null &&
+                          AppIcons.byIconValue[selectedCategory!.iconValue] !=
+                              null)
+                        OpenMojiIcon(
+                          AppIcons.byIconValue[selectedCategory!.iconValue]!,
+                          size: 28,
+                        )
+                      else
+                        Icon(
+                          Icons.category_rounded,
+                          size: 22,
+                          color: palette.textSecondary,
+                        ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          selectedCategory?.name ?? 'Pilih kategori, yuk!',
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTheme.body(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: selectedCategory != null
+                                ? palette.textPrimary
+                                : palette.textSecondary,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 20,
+                        color: palette.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 14),
             Row(
@@ -241,6 +276,33 @@ class TransactionSheetView extends StatelessWidget {
                   ),
                 ],
               ],
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: itemNameController,
+              style: AppTheme.body(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: palette.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Nama Item (opsional)',
+                hintStyle: AppTheme.body(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: palette.textSecondary,
+                ),
+                filled: true,
+                fillColor: palette.chipNeutral,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
             ),
             const SizedBox(height: 10),
             TextField(
@@ -337,13 +399,13 @@ Widget previewTransactionSheetViewExpense() {
     isEdit: false,
     isIncome: false,
     amountStr: '45000',
-    categories: [_previewSheetCategory],
     selectedCategory: null,
     wallet: _previewSheetWallet,
     dateTime: DateTime.now(),
+    itemNameController: TextEditingController(),
     noteController: TextEditingController(),
     onSelectType: (_) {},
-    onSelectCategory: (_) {},
+    onTapCategory: () {},
     onTapWallet: () {},
     onTapDate: () {},
     onKeyTap: (_) {},
@@ -357,15 +419,15 @@ Widget previewTransactionSheetViewEdit() {
     isEdit: true,
     isIncome: false,
     amountStr: '45000',
-    categories: [_previewSheetCategory],
     selectedCategory: _previewSheetCategory,
     wallet: _previewSheetWallet,
     dateTime: DateTime(2026, 7, 4),
+    itemNameController: TextEditingController(text: 'Sayur & lauk'),
     noteController: TextEditingController(
       text: 'Belanja sayur & lauk di pasar',
     ),
     onSelectType: (_) {},
-    onSelectCategory: (_) {},
+    onTapCategory: () {},
     onTapWallet: () {},
     onTapDate: () {},
     onKeyTap: (_) {},

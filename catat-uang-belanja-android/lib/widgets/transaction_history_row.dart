@@ -52,10 +52,16 @@ class TransactionHistoryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTransfer = transaction.type == TransactionType.transfer;
     final isPositive = transaction.type == TransactionType.income || (isTransfer && isTransferIn);
+    final categoryLabel = category?.name ?? (isPositive ? 'Pemasukan' : 'Pengeluaran');
+    final hasItemName = transaction.itemName?.isNotEmpty ?? false;
     final label = isTransfer
         ? (isTransferIn ? 'Transfer dari ${wallet?.name ?? '-'}' : 'Transfer ke ${wallet?.name ?? '-'}')
-        : (category?.name ?? (isPositive ? 'Pemasukan' : 'Pengeluaran'));
-    final sub = (transaction.note?.isNotEmpty ?? false) ? transaction.note! : (isTransfer ? '' : (wallet?.name ?? ''));
+        : (hasItemName ? transaction.itemName! : categoryLabel);
+    final sub = isTransfer
+        ? ''
+        : (hasItemName
+            ? categoryLabel
+            : ((transaction.note?.isNotEmpty ?? false) ? transaction.note! : (wallet?.name ?? '')));
     final subLine = [sub, relativeDate ?? ''].where((s) => s.isNotEmpty).join(' · ');
     final iconAsset = category != null ? AppIcons.byIconValue[category!.iconValue] : null;
 

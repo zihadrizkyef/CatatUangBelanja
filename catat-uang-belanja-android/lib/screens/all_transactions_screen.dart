@@ -128,6 +128,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
 
       final haystack = [
         categoriesById[t.categoryId]?.name ?? '',
+        t.itemName ?? '',
         t.note ?? '',
         walletsById[t.walletId]?.name ?? '',
         if (t.targetWalletId != null) walletsById[t.targetWalletId]?.name ?? '',
