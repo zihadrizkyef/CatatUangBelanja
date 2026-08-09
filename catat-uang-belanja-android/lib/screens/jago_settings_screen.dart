@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../repositories/finance_repository.dart';
 import '../services/jago_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/snackbar.dart';
@@ -8,10 +9,11 @@ import 'jago_settings_view.dart';
 
 /// Pengaturan > Bank Jago screen: connects the Bank Jago email sync
 /// (integrasi-jago) via [JagoService], or shows/disconnects an existing
-/// connection. No wallet to pick — sync auto-creates and manages one
-/// wallet per Kantong (pocket) as they're discovered in Zihad's Gmail.
-/// Reads [JagoService] for the connect/disconnect/status calls; hands the
-/// rest to [JagoSettingsView].
+/// connection. Named Kantong (Tabungan, Modal Bisnis, dst.) auto-match by
+/// name and need no picker — only the nameless "Kantong Terhubung" (which
+/// handles QRIS/card/transfer/top-up/withdrawal) is picked here, from
+/// wallets Zihad already created himself. Reads [JagoService]/
+/// [FinanceRepository]; hands the rest to [JagoSettingsView].
 class JagoSettingsScreen extends StatefulWidget {
   const JagoSettingsScreen({super.key});
 
@@ -23,11 +25,17 @@ class _JagoSettingsScreenState extends State<JagoSettingsScreen> {
   bool _loading = true;
   bool _busy = false;
   JagoStatus _status = JagoStatus.disconnected;
+  int _pickerIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _loadStatus();
+  }
+
+  void _cycleWallet(int walletCount) {
+    if (walletCount == 0) return;
+    setState(() => _pickerIndex = (_pickerIndex + 1) % walletCount);
   }
 
   Future<void> _loadStatus() async {
@@ -40,19 +48,12 @@ class _JagoSettingsScreenState extends State<JagoSettingsScreen> {
     }
   }
 
-  Future<void> _connect() async {
+  Future<void> _connect(String connectedWalletId) async {
     setState(() => _busy = true);
     try {
-      // The backend kicks off the (possibly long, for a first connect with
-      // years of history) sync in the background rather than waiting for
-      // it — so there's no import count to report here yet, just that the
-      // connection itself succeeded.
-      await context.read<JagoService>().connect();
+      await context.read<JagoService>().connect(connectedWalletId);
       if (!mounted) return;
-      showSnackBarMessage(
-        context,
-        'Bank Jago terhubung! Transaksinya lagi disinkronkan di belakang — cek lagi sebentar ya, Bun ✨',
-      );
+      showSnackBarMessage(context, 'Bank Jago terhubung! Sinkron mulai dari sekarang, Bun ✨');
       await _loadStatus();
     } catch (err) {
       if (mounted) showSnackBarMessage(context, _errorMessage(err));
@@ -88,11 +89,17 @@ class _JagoSettingsScreenState extends State<JagoSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final wallets = context.watch<FinanceRepository>().wallets;
+    final pickerWallet = wallets.isEmpty ? null : wallets[_pickerIndex % wallets.length];
+    final connectedWallet = wallets.where((w) => w.id == _status.connectedWalletId).firstOrNull;
     return JagoSettingsView(
       loading: _loading,
       busy: _busy,
       status: _status,
-      onConnect: _connect,
+      pickerWallet: pickerWallet,
+      connectedWallet: connectedWallet,
+      onCycleWallet: () => _cycleWallet(wallets.length),
+      onConnect: pickerWallet == null ? null : () => _connect(pickerWallet.id),
       onDisconnect: _disconnect,
       onTapBack: () => Navigator.of(context).pop(),
     );

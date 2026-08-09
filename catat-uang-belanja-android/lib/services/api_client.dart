@@ -73,11 +73,18 @@ class ApiClient {
     return _decode(response);
   }
 
-  Future<Map<String, Object?>> connectJago(String token, {required String serverAuthCode}) async {
+  Future<Map<String, Object?>> connectJago(
+    String token, {
+    required String serverAuthCode,
+    required String connectedWalletId,
+  }) async {
     final response = await _client.post(
       _uri('/jago/connect'),
       headers: _headers(token: token),
-      body: jsonEncode({'server_auth_code': serverAuthCode}),
+      body: jsonEncode({
+        'server_auth_code': serverAuthCode,
+        'connected_wallet_id': connectedWalletId,
+      }),
     );
     return _decode(response);
   }

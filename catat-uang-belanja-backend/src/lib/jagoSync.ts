@@ -9,10 +9,6 @@ function jagoSenderDomain(): string {
   return process.env.JAGO_SENDER_EMAIL || 'jago.com';
 }
 
-function jagoSenderQuery(): string {
-  return `from:${jagoSenderDomain()}`;
-}
-
 const gmailApiBase = 'https://gmail.googleapis.com/gmail/v1/users/me';
 // Defensive cap on pagination per sync run — a personal inbox's Jago
 // notification volume is low; this just guards against an unbounded loop
@@ -110,24 +106,6 @@ async function fetchMessage(accessToken: string, id: string): Promise<GmailMessa
   return gmailFetch(accessToken, `/messages/${id}`, { format: 'full' });
 }
 
-/// Lists candidate message ids for the very first sync (no historyId cursor
-/// yet), via a plain search — Gmail's History API needs a starting point we
-/// don't have until after this first pass.
-async function listInitialMessageIds(accessToken: string): Promise<string[]> {
-  const ids: string[] = [];
-  let pageToken: string | undefined;
-  for (let page = 0; page < maxPages; page++) {
-    const result = await gmailFetch(accessToken, '/messages', {
-      q: jagoSenderQuery(),
-      ...(pageToken ? { pageToken } : {}),
-    });
-    for (const m of result.messages ?? []) ids.push(m.id);
-    pageToken = result.nextPageToken;
-    if (!pageToken) break;
-  }
-  return ids;
-}
-
 /// Lists candidate message ids added since [historyId], via the History
 /// API — the efficient path used on every sync after the first.
 async function listMessageIdsSince(accessToken: string, historyId: string): Promise<{ ids: string[]; latestHistoryId: string }> {
@@ -144,9 +122,10 @@ async function listMessageIdsSince(accessToken: string, historyId: string): Prom
       });
     } catch {
       // startHistoryId too old / expired (Gmail only retains ~a week of
-      // history) — fall back to a fresh full search rather than erroring
-      // the whole sync out; duplicates are harmless (externalId dedupes).
-      return { ids: await listInitialMessageIds(accessToken), latestHistoryId: historyId };
+      // history) — never backfill (see this file's header context): just
+      // fast-forward the cursor to now and skip whatever was missed in the
+      // gap, consistent with every other no-backfill path in this module.
+      return { ids: [], latestHistoryId: await currentHistoryId(accessToken) };
     }
     for (const h of result.history ?? []) {
       for (const added of h.messagesAdded ?? []) ids.push(added.message.id);
@@ -184,10 +163,10 @@ function normalizeKantongKey(nameOrSentinel: string): string {
 }
 
 /// Finds the Wallet already linked to Kantong `key` for this user, or
-/// creates one (and the JagoKantong row pointing to it) if this is the
-/// first time this Kantong has been seen. Also recreates the wallet if
-/// the user deleted it since — the mapping shouldn't get permanently
-/// stuck pointing at a wallet that no longer exists.
+/// links to/creates one (and the JagoKantong row pointing to it) if this
+/// is the first time this Kantong has been seen. Also recreates the
+/// wallet if the user deleted it since — the mapping shouldn't get
+/// permanently stuck pointing at a wallet that no longer exists.
 async function resolveKantongWallet(userId: string, key: string, fallbackName: string) {
   const existing = await prisma.jagoKantong.findUnique({ where: { userId_key: { userId, key } } });
   if (existing) {
@@ -195,7 +174,12 @@ async function resolveKantongWallet(userId: string, key: string, fallbackName: s
     if (wallet) return wallet;
   }
 
-  const wallet = await prisma.wallet.create({ data: { userId, name: fallbackName, ...jagoWalletDefaults } });
+  // First time this Kantong is seen: prefer linking to a wallet Zihad
+  // already created himself (with the real opening balance he set) over
+  // auto-creating a fresh, wrongly-zero one — see this file's header
+  // context on why backfilling a derived balance from zero can't work.
+  const named = await prisma.wallet.findFirst({ where: { userId, name: { equals: fallbackName, mode: 'insensitive' } } });
+  const wallet = named ?? (await prisma.wallet.create({ data: { userId, name: fallbackName, ...jagoWalletDefaults } }));
   await prisma.jagoKantong.upsert({
     where: { userId_key: { userId, key } },
     update: { walletId: wallet.id },
@@ -228,12 +212,11 @@ export async function syncJagoForUser(userId: string): Promise<JagoSyncResult> {
     messageIds = result.ids;
     nextHistoryId = result.latestHistoryId;
   } else {
-    // First connect: capture the cursor *before* the initial search so no
-    // message that arrives mid-scan gets missed on the next run (a
-    // resulting duplicate on this run's own results is harmless —
-    // externalId dedupes below).
+    // First-ever connect: never backfill (see this file's header
+    // context) — just capture the current cursor so sync starts fresh
+    // from this exact moment forward.
     nextHistoryId = await currentHistoryId(accessToken);
-    messageIds = await listInitialMessageIds(accessToken);
+    messageIds = [];
   }
 
   let imported = 0;
@@ -247,9 +230,7 @@ export async function syncJagoForUser(userId: string): Promise<JagoSyncResult> {
       // listMessageIdsSince (History API) has no sender filter — it
       // returns every new message in the mailbox, not just Jago's — so
       // this check is the only thing actually scoping Gmail access to
-      // Jago's own emails on that path (listInitialMessageIds's `q:
-      // from:...` search already filters, but re-checking here is cheap
-      // and keeps both paths honest).
+      // Jago's own emails.
       const from = headerValue(message.payload?.headers, 'From');
       if (!from.toLowerCase().includes(jagoSenderDomain().toLowerCase())) continue;
 

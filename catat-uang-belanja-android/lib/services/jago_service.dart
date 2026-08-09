@@ -9,14 +9,16 @@ import 'auth_service.dart';
 /// notification emails.
 const gmailReadonlyScope = 'https://www.googleapis.com/auth/gmail.readonly';
 
-/// Mirrors backend routes/jago.ts's GET /jago/status shape. No wallet_id —
-/// Bank Jago sync auto-creates and manages one wallet per Kantong (pocket)
-/// instead of linking to a single pre-picked wallet.
+/// Mirrors backend routes/jago.ts's GET /jago/status shape. Named Kantong
+/// (Tabungan, Modal Bisnis, dst.) auto-match by name and need no picker —
+/// only the nameless "Kantong Terhubung" is explicitly picked at connect
+/// time, hence [connectedWalletId].
 class JagoStatus {
-  const JagoStatus({required this.connected, this.connectedAt});
+  const JagoStatus({required this.connected, this.connectedAt, this.connectedWalletId});
 
   final bool connected;
   final DateTime? connectedAt;
+  final String? connectedWalletId;
 
   static const disconnected = JagoStatus(connected: false);
 
@@ -25,6 +27,7 @@ class JagoStatus {
     connectedAt: json['connected_at'] != null
         ? DateTime.parse(json['connected_at'] as String)
         : null,
+    connectedWalletId: json['connected_wallet_id'] as String?,
   );
 }
 
@@ -50,13 +53,14 @@ class JagoService {
   }
 
   /// Prompts the Google account picker for [gmailReadonlyScope] (skipped if
-  /// already granted) and exchanges the result on the backend, which runs
-  /// the first sync — auto-creating a wallet per Kantong as it goes, no
-  /// wallet to pick here. Returns how many transactions that first sync
-  /// imported. Throws [StateError] if not logged in yet or the user
-  /// declines the Gmail permission, [ApiException] if the backend rejects
-  /// it.
-  Future<int> connect() async {
+  /// already granted) and exchanges the result on the backend along with
+  /// [connectedWalletId] — the wallet that handles Kantong Terhubung's
+  /// QRIS/card/transfer/top-up/withdrawal activity, since that Kantong has
+  /// no name in any Jago email to auto-match against. Returns how many
+  /// transactions the sync imported. Throws [StateError] if not logged in
+  /// yet or the user declines the Gmail permission, [ApiException] if the
+  /// backend rejects it.
+  Future<int> connect(String connectedWalletId) async {
     final token = await _authService.sessionToken;
     if (token == null) {
       throw StateError(
@@ -73,7 +77,11 @@ class JagoService {
       );
     }
 
-    final response = await _apiClient.connectJago(token, serverAuthCode: authorization.serverAuthCode);
+    final response = await _apiClient.connectJago(
+      token,
+      serverAuthCode: authorization.serverAuthCode,
+      connectedWalletId: connectedWalletId,
+    );
     return response['imported'] as int;
   }
 
