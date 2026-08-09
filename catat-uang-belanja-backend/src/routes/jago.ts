@@ -13,9 +13,19 @@ const connectSchema = z.object({
   server_auth_code: z.string().min(1),
 });
 
-// Runs the first sync immediately. No wallet to pick anymore — Bank Jago
-// sync auto-creates and manages its own wallet per Kantong (see
-// lib/jagoSync.ts's resolveKantongWallet).
+// No wallet to pick anymore — Bank Jago sync auto-creates and manages its
+// own wallet per Kantong (see lib/jagoSync.ts's resolveKantongWallet).
+//
+// Doesn't wait for the sync to finish before responding — a first-time
+// connect can mean scanning years of Gmail history (confirmed against a
+// real account: 175 messages), which can comfortably exceed Render's
+// request timeout and leave the app hanging or erroring out even though
+// the sync itself keeps running fine to completion server-side regardless
+// (this happened for real: the request appeared to hang/fail client-side,
+// but all 175 messages were correctly imported by the time anyone
+// checked). The app's own regular sync cycle (SyncService.syncNow, right
+// before every /sync/pull) picks up whatever this leaves behind moments
+// later, so there's nothing to actually wait for here.
 jagoRouter.post('/connect', async (req, res) => {
   const parsed = connectSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -32,17 +42,23 @@ jagoRouter.post('/connect', async (req, res) => {
     return;
   }
 
+  const existing = await prisma.user.findUnique({ where: { id: userId }, select: { jagoHistoryId: true } });
+
   await prisma.user.update({
     where: { id: userId },
     data: {
       jagoRefreshToken: encryptToken(tokens.refreshToken),
-      jagoHistoryId: null, // reset cursor — this connect's first sync does a full search
+      // Only ever null on a genuine first-time connect (triggering a full
+      // historical scan) — preserved on a reconnect so re-pressing
+      // "Hubungkan Gmail" doesn't force a wasteful, slow full rescan of
+      // an account that's already caught up.
+      jagoHistoryId: existing?.jagoHistoryId ?? null,
       jagoConnectedAt: new Date(),
     },
   });
 
-  const result = await syncJagoForUser(userId);
-  res.json({ connected: true, imported: result.imported });
+  syncJagoForUser(userId).catch(() => {});
+  res.json({ connected: true, imported: 0 });
 });
 
 jagoRouter.delete('/connect', async (req, res) => {

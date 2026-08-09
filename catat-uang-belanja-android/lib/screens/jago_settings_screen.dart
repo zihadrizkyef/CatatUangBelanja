@@ -43,9 +43,16 @@ class _JagoSettingsScreenState extends State<JagoSettingsScreen> {
   Future<void> _connect() async {
     setState(() => _busy = true);
     try {
-      final imported = await context.read<JagoService>().connect();
+      // The backend kicks off the (possibly long, for a first connect with
+      // years of history) sync in the background rather than waiting for
+      // it — so there's no import count to report here yet, just that the
+      // connection itself succeeded.
+      await context.read<JagoService>().connect();
       if (!mounted) return;
-      showSnackBarMessage(context, 'Bank Jago terhubung! $imported transaksi langsung masuk ✨');
+      showSnackBarMessage(
+        context,
+        'Bank Jago terhubung! Transaksinya lagi disinkronkan di belakang — cek lagi sebentar ya, Bun ✨',
+      );
       await _loadStatus();
     } catch (err) {
       if (mounted) showSnackBarMessage(context, _errorMessage(err));
